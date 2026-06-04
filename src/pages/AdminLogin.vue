@@ -67,8 +67,8 @@ const loginAdmin = async () => {
   try {
     const session = await authApi.login({
       type: 'admin',
-      email: form.value.email,
-      password: form.value.password
+      email: form.value.email.trim(),
+      password: form.value.password.trim()
     })
     saveSession(session)
     router.push('/admin-dashboard')

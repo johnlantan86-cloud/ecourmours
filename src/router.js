@@ -31,9 +31,16 @@ const router = createRouter({
 })
 
 const getCurrentUser = () => {
+  const token = localStorage.getItem('authToken')
+  if (!token) {
+    localStorage.removeItem('currentUser')
+    return null
+  }
+
   try {
     return JSON.parse(localStorage.getItem('currentUser') || 'null')
   } catch {
+    localStorage.removeItem('authToken')
     localStorage.removeItem('currentUser')
     return null
   }

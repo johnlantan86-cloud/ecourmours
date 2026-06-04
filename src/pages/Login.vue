@@ -89,8 +89,8 @@ const login = async () => {
   try {
     const session = await authApi.login({
       type: loginType.value,
-      email: form.value.email,
-      password: form.value.password
+      email: form.value.email.trim(),
+      password: form.value.password.trim()
     })
     saveSession(session)
     router.push(loginType.value === 'seller' ? '/seller-dashboard' : '/buyer-dashboard')

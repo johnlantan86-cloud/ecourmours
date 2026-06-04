@@ -32,8 +32,8 @@ const sellerRegistrationSchema = z.object({
 
 const loginSchema = z.object({
   type: z.enum(['buyer', 'seller', 'admin']),
-  email: z.string().email(),
-  password: z.string().min(1)
+  email: z.string().trim().email('Enter a valid email address'),
+  password: z.string().trim().min(1, 'Password is required')
 })
 
 const emailExists = (db, email) => {

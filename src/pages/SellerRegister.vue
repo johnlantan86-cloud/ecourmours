@@ -93,6 +93,7 @@
               accept="image/*"
               required
             />
+            <p v-if="isPhotoLoading" class="helper-text">Preparing ID photo...</p>
             <div v-if="form.idphoto" class="photo-preview">
               <img :src="form.idphoto" alt="ID Photo" />
             </div>
@@ -109,7 +110,9 @@
             />
           </div>
 
-          <button type="submit" class="btn btn-primary">Register as Seller</button>
+          <button type="submit" class="btn btn-primary" :disabled="isSubmitting || isPhotoLoading">
+            {{ isSubmitting ? 'Registering...' : isPhotoLoading ? 'Preparing photo...' : 'Register as Seller' }}
+          </button>
         </form>
 
         <p class="login-link">
@@ -128,6 +131,8 @@ import { authApi, saveSession } from '../api.js'
 import PasswordField from '../components/PasswordField.vue'
 
 const router = useRouter()
+const isPhotoLoading = ref(false)
+const isSubmitting = ref(false)
 
 const form = ref({
   name: '',
@@ -153,21 +158,35 @@ const registrationPayload = () => ({
 
 const handlePhotoUpload = (e) => {
   const file = e.target.files[0]
+  form.value.idphoto = ''
+
   if (file) {
+    isPhotoLoading.value = true
     const reader = new FileReader()
     reader.onload = (event) => {
       form.value.idphoto = event.target.result
+      isPhotoLoading.value = false
+    }
+    reader.onerror = () => {
+      isPhotoLoading.value = false
+      alert('Could not read that ID photo. Please choose another image.')
     }
     reader.readAsDataURL(file)
   }
 }
 
 const registerSeller = async () => {
+  if (isPhotoLoading.value) {
+    alert('Please wait for your ID photo to finish loading.')
+    return
+  }
+
   if (!form.value.idphoto) {
     alert('Please upload your ID photo!')
     return
   }
 
+  isSubmitting.value = true
   try {
     const session = await authApi.registerSeller(registrationPayload())
     saveSession(session)
@@ -175,6 +194,8 @@ const registerSeller = async () => {
     router.push('/seller-dashboard')
   } catch (error) {
     alert(error.message)
+  } finally {
+    isSubmitting.value = false
   }
 }
 </script>
@@ -259,6 +280,12 @@ const registerSeller = async () => {
   text-align: center;
 }
 
+.helper-text {
+  color: #64748b;
+  font-size: 0.86rem;
+  margin-top: 0.45rem;
+}
+
 .photo-preview img {
   max-width: 200px;
   max-height: 200px;
@@ -283,6 +310,12 @@ const registerSeller = async () => {
 
 .btn-primary:hover {
   background: #c0392b;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+  transform: none;
 }
 
 .login-link {
