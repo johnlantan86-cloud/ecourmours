@@ -18,6 +18,7 @@ const clientDistPath = join(__dirname, '..', 'dist')
 const clientIndexPath = join(clientDistPath, 'index.html')
 
 const app = express()
+const host = process.env.HOST || '0.0.0.0'
 
 const isAllowedOrigin = (origin) => {
   if (!origin) return true
@@ -67,6 +68,6 @@ if (existsSync(clientIndexPath)) {
 app.use(notFound)
 app.use(errorHandler)
 
-app.listen(config.port, () => {
-  console.log(`Server running at http://127.0.0.1:${config.port}`)
+app.listen(config.port, host, () => {
+  console.log(`Server running at http://${host}:${config.port}`)
 })
