@@ -1,3 +1,6 @@
+import { existsSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import express from 'express'
 import cors from 'cors'
 import morgan from 'morgan'
@@ -9,6 +12,10 @@ import buyerRoutes from './routes/buyers.js'
 import sellerRoutes from './routes/sellers.js'
 import reportRoutes from './routes/reports.js'
 import adminRoutes from './routes/admin.js'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const clientDistPath = join(__dirname, '..', 'dist')
+const clientIndexPath = join(clientDistPath, 'index.html')
 
 const app = express()
 
@@ -46,9 +53,20 @@ app.use('/api/sellers', sellerRoutes)
 app.use('/api/reports', reportRoutes)
 app.use('/api/admin', adminRoutes)
 
+if (existsSync(clientIndexPath)) {
+  app.use(express.static(clientDistPath))
+  app.use((req, res, next) => {
+    if (req.method !== 'GET' || req.path.startsWith('/api')) {
+      return next()
+    }
+
+    res.sendFile(clientIndexPath)
+  })
+}
+
 app.use(notFound)
 app.use(errorHandler)
 
 app.listen(config.port, () => {
-  console.log(`API server running at http://127.0.0.1:${config.port}`)
+  console.log(`Server running at http://127.0.0.1:${config.port}`)
 })
