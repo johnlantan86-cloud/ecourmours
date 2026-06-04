@@ -20,21 +20,34 @@ const clientIndexPath = join(clientDistPath, 'index.html')
 const app = express()
 const host = process.env.HOST || '0.0.0.0'
 
-const isAllowedOrigin = (origin) => {
+app.set('trust proxy', true)
+
+const isSameHostOrigin = (origin, req) => {
+  try {
+    return new URL(origin).host === req.get('host')
+  } catch {
+    return false
+  }
+}
+
+const isAllowedOrigin = (origin, req) => {
   if (!origin) return true
+  if (isSameHostOrigin(origin, req)) return true
   if (config.corsOrigins.includes(origin)) return true
   return /^https?:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)
 }
 
-app.use(cors({
-  origin: (origin, callback) => {
-    if (isAllowedOrigin(origin)) {
-      return callback(null, true)
-    }
-    return callback(new Error('Origin not allowed by CORS'))
-  },
-  credentials: true
-}))
+app.use('/api', (req, res, next) => {
+  cors({
+    origin: (origin, callback) => {
+      if (isAllowedOrigin(origin, req)) {
+        return callback(null, true)
+      }
+      return callback(new Error('Origin not allowed by CORS'))
+    },
+    credentials: true
+  })(req, res, next)
+})
 app.use(express.json({ limit: '10mb' }))
 app.use(morgan('dev'))
 
