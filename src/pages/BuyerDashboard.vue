@@ -1,127 +1,105 @@
 <template>
-  <div class="buyer-dashboard-container">
-    <!-- Navbar -->
-    <nav class="navbar">
-      <div class="nav-content">
-        <router-link to="/" class="logo">🏪 Kigali Great Market</router-link>
-        <div class="nav-links">
-          <router-link to="/marketplace" class="nav-link">Browse Sellers</router-link>
-          <button @click="logout" class="btn btn-secondary">Logout</button>
-        </div>
-      </div>
-    </nav>
+  <div class="buyer-dashboard">
+    <aside class="dashboard-sidebar">
+      <router-link to="/" class="sidebar-brand">
+        <span>KGM</span>
+        <strong>Kigali Great Market</strong>
+      </router-link>
 
-    <!-- Main Content -->
-    <div class="dashboard-content">
-      <!-- Profile Section -->
-      <div class="profile-section">
-        <div class="profile-card">
-          <div class="profile-picture-wrapper">
-            <img v-if="buyer.profilePicture" :src="buyer.profilePicture" alt="Profile" class="profile-picture">
-            <div v-else class="profile-picture-placeholder">
-              <span class="placeholder-icon">👤</span>
-            </div>
-            <label class="upload-button">
-              <input type="file" @change="handleProfilePictureUpload" accept="image/*" style="display: none;">
-              📷 Change Picture
-            </label>
-          </div>
-
-          <div class="profile-info">
-            <h1>{{ buyer.name }}</h1>
-            <div class="buyer-details">
-              <div class="detail-item">
-                <span class="label">📧 Email:</span>
-                <span class="value">{{ buyer.email }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="label">📱 Phone:</span>
-                <span class="value">{{ buyer.phone }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="label">📍 Location:</span>
-                <span class="value">{{ buyer.location }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="label">🆔 ID Number:</span>
-                <span class="value">{{ buyer.idnumber }}</span>
-              </div>
-            </div>
-          </div>
+      <div class="buyer-card">
+        <div class="avatar-wrap">
+          <img v-if="buyer.profilePicture" :src="buyer.profilePicture" alt="Profile" class="profile-picture">
+          <div v-else class="profile-picture-placeholder">{{ buyerInitials }}</div>
+          <label class="upload-button" title="Change profile picture">
+            <input type="file" @change="handleProfilePictureUpload" accept="image/*">
+            Photo
+          </label>
         </div>
+        <h1>{{ buyer.name || 'Buyer' }}</h1>
+        <p>{{ buyer.location || 'Location not set' }}</p>
       </div>
 
-      <!-- Quick Actions -->
-      <div class="quick-actions">
-        <h2>Available Actions</h2>
-        <div class="actions-grid">
-          <router-link to="/marketplace" class="action-card">
-            <div class="action-icon">🛍️</div>
-            <h3>Browse All Sellers</h3>
-            <p>Explore all registered sellers and their products</p>
-          </router-link>
+      <nav class="side-nav">
+        <router-link to="/marketplace" class="side-link">Marketplace</router-link>
+        <button class="side-link" @click="scrollToSection('favorite-sellers')">Favorite Sellers</button>
+        <button class="side-link" @click="scrollToSection('wishlist')">Wishlist</button>
+        <button class="side-link" @click="scrollToSection('edit-profile')">Profile Settings</button>
+      </nav>
 
-          <div class="action-card" @click="scrollToSection('favorite-sellers')">
-            <div class="action-icon">⭐</div>
+      <button @click="logout" class="btn btn-secondary logout-button">Logout</button>
+    </aside>
+
+    <main class="dashboard-main">
+      <header class="dashboard-topbar">
+        <div>
+          <span class="section-kicker">Buyer dashboard</span>
+          <h2>Welcome back, {{ buyer.name || 'buyer' }}</h2>
+        </div>
+        <router-link to="/marketplace" class="btn btn-primary">Browse Sellers</router-link>
+      </header>
+
+      <section class="profile-panel">
+        <div class="profile-copy">
+          <span class="panel-label">Profile overview</span>
+          <h3>Your marketplace account</h3>
+          <p>Keep your location and contact details current so seller suggestions can become more precise.</p>
+        </div>
+
+        <div class="buyer-details">
+          <div class="detail-item">
+            <span>Email</span>
+            <strong>{{ buyer.email || 'Not available' }}</strong>
+          </div>
+          <div class="detail-item">
+            <span>Phone</span>
+            <strong>{{ buyer.phone || 'Not available' }}</strong>
+          </div>
+          <div class="detail-item">
+            <span>Location</span>
+            <strong>{{ buyer.location || 'Not available' }}</strong>
+          </div>
+          <div class="detail-item">
+            <span>ID Number</span>
+            <strong>{{ buyer.idnumber || 'Not available' }}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="stats-grid">
+        <div class="stat-box">
+          <span>Favorite sellers</span>
+          <strong>{{ favoriteSellerDetails.length }}</strong>
+        </div>
+        <div class="stat-box">
+          <span>Wishlist products</span>
+          <strong>{{ wishlistDetails.length }}</strong>
+        </div>
+        <div class="stat-box">
+          <span>Total purchases</span>
+          <strong>0</strong>
+        </div>
+        <div class="stat-box">
+          <span>Unread messages</span>
+          <strong>0</strong>
+        </div>
+      </section>
+
+      <section class="quick-actions">
+        <button class="action-chip" @click="scrollToSection('favorite-sellers')">Favorite sellers</button>
+        <button class="action-chip" @click="viewPurchaseHistory">Purchase history</button>
+        <button class="action-chip" @click="scrollToSection('wishlist')">Wishlist</button>
+        <button class="action-chip" @click="toggleEditMode">{{ editMode ? 'Close settings' : 'Edit profile' }}</button>
+      </section>
+
+      <section id="favorite-sellers" class="saved-section">
+        <div class="section-title">
+          <div>
+            <span class="panel-label">Saved businesses</span>
             <h3>Favorite Sellers</h3>
-            <p>View your saved favorite sellers</p>
           </div>
-
-          <div class="action-card" @click="viewPurchaseHistory">
-            <div class="action-icon">📦</div>
-            <h3>Purchase History</h3>
-            <p>Track your past purchases and orders</p>
-          </div>
-
-          <div class="action-card" @click="scrollToSection('wishlist')">
-            <div class="action-icon">❤️</div>
-            <h3>Wishlist</h3>
-            <p>View your saved items and products</p>
-          </div>
+          <router-link to="/marketplace" class="text-link">Find sellers</router-link>
         </div>
-      </div>
 
-      <!-- Statistics -->
-      <div class="statistics-section">
-        <h2>Your Activity</h2>
-        <div class="stats-grid">
-          <div class="stat-box">
-            <div class="stat-icon">👥</div>
-            <div class="stat-info">
-              <span class="stat-label">Favorite Sellers</span>
-              <span class="stat-value">{{ favoriteSellerDetails.length }}</span>
-            </div>
-          </div>
-
-          <div class="stat-box">
-            <div class="stat-icon">🛍️</div>
-            <div class="stat-info">
-              <span class="stat-label">Total Purchases</span>
-              <span class="stat-value">0</span>
-            </div>
-          </div>
-
-          <div class="stat-box">
-            <div class="stat-icon">⭐</div>
-            <div class="stat-info">
-              <span class="stat-label">Wishlist Products</span>
-              <span class="stat-value">{{ wishlistDetails.length }}</span>
-            </div>
-          </div>
-
-          <div class="stat-box">
-            <div class="stat-icon">💬</div>
-            <div class="stat-info">
-              <span class="stat-label">Unread Messages</span>
-              <span class="stat-value">0</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Favorite Sellers -->
-      <div id="favorite-sellers" class="saved-section">
-        <h2>Favorite Sellers</h2>
         <div v-if="favoriteSellerDetails.length > 0" class="saved-grid">
           <router-link
             v-for="seller in favoriteSellerDetails"
@@ -132,20 +110,26 @@
             <img v-if="seller.idphoto" :src="seller.idphoto" :alt="seller.businessName" class="saved-image">
             <div v-else class="saved-image-placeholder">Store</div>
             <div class="saved-info">
-              <h3>{{ seller.businessName }}</h3>
+              <h4>{{ seller.businessName }}</h4>
               <p>{{ seller.location }}</p>
-              <span>View seller profile</span>
+              <span>Open profile</span>
             </div>
           </router-link>
         </div>
         <div v-else class="mini-empty">
           <p>No favorite sellers yet.</p>
         </div>
-      </div>
+      </section>
 
-      <!-- Wishlist -->
-      <div id="wishlist" class="saved-section">
-        <h2>Wishlist</h2>
+      <section id="wishlist" class="saved-section">
+        <div class="section-title">
+          <div>
+            <span class="panel-label">Saved products</span>
+            <h3>Wishlist</h3>
+          </div>
+          <router-link to="/marketplace" class="text-link">Browse products</router-link>
+        </div>
+
         <div v-if="wishlistDetails.length > 0" class="saved-grid">
           <router-link
             v-for="item in wishlistDetails"
@@ -156,7 +140,7 @@
             <img v-if="item.productImage" :src="item.productImage" :alt="item.productName" class="saved-image">
             <div v-else class="saved-image-placeholder">Item</div>
             <div class="saved-info">
-              <h3>{{ item.productName }}</h3>
+              <h4>{{ item.productName }}</h4>
               <p>${{ Number(item.productPrice).toFixed(2) }}</p>
               <span>From {{ item.sellerName }}</span>
             </div>
@@ -165,16 +149,20 @@
         <div v-else class="mini-empty">
           <p>No wishlist products yet.</p>
         </div>
-      </div>
+      </section>
 
-      <!-- Edit Profile -->
-      <div class="edit-section">
-        <h2>Edit Profile</h2>
-        <button @click="toggleEditMode" class="btn btn-primary">
-          {{ editMode ? 'Cancel' : 'Edit Profile Information' }}
-        </button>
+      <section id="edit-profile" class="edit-section">
+        <div class="section-title">
+          <div>
+            <span class="panel-label">Account settings</span>
+            <h3>Edit Profile</h3>
+          </div>
+          <button @click="toggleEditMode" class="btn btn-secondary">
+            {{ editMode ? 'Cancel' : 'Edit' }}
+          </button>
+        </div>
 
-        <div v-if="editMode" class="edit-form">
+        <form v-if="editMode" class="edit-form" @submit.prevent="saveProfile">
           <div class="form-group">
             <label>Phone Number</label>
             <input v-model="buyer.phone" type="tel" placeholder="Enter phone number">
@@ -182,165 +170,33 @@
 
           <div class="form-group">
             <label>Short Location Name</label>
-            <input v-model="buyer.location" list="profile-location-options" type="text" placeholder="Enter location">
-            <datalist id="profile-location-options">
-              <option v-for="location in shortLocationOptions" :key="location" :value="location" />
-            </datalist>
+            <input v-model="buyer.location" type="text" placeholder="Enter location">
           </div>
 
-          <div class="location-panel">
-            <div class="location-grid">
-              <div class="form-group">
-                <label>Province / City</label>
-                <input v-model="buyer.locationMeta.province" list="profile-province-options" type="text">
-                <datalist id="profile-province-options">
-                  <option v-for="province in provinceOptions" :key="province" :value="province" />
-                </datalist>
-              </div>
-
-              <div class="form-group">
-                <label>District</label>
-                <input
-                  v-model="buyer.locationMeta.district"
-                  list="profile-district-options"
-                  type="text"
-                  @change="syncProvinceFromDistrict"
-                >
-                <datalist id="profile-district-options">
-                  <option v-for="district in districtOptions" :key="district" :value="district" />
-                </datalist>
-              </div>
-
-              <div class="form-group">
-                <label>Sector</label>
-                <input
-                  v-model="buyer.locationMeta.sector"
-                  list="profile-sector-options"
-                  type="text"
-                  @change="syncDistrictFromSector"
-                >
-                <datalist id="profile-sector-options">
-                  <option v-for="sector in sectorOptions" :key="sector" :value="sector" />
-                </datalist>
-              </div>
-
-              <div class="form-group">
-                <label>Cell</label>
-                <input v-model="buyer.locationMeta.cell" list="profile-cell-options" type="text">
-                <datalist id="profile-cell-options">
-                  <option v-for="cell in cellOptions" :key="cell" :value="cell" />
-                </datalist>
-              </div>
-
-              <div class="form-group">
-                <label>Village</label>
-                <input v-model="buyer.locationMeta.village" list="profile-village-options" type="text">
-                <datalist id="profile-village-options">
-                  <option v-for="village in villageOptions" :key="village" :value="village" />
-                </datalist>
-              </div>
-
-              <div class="form-group">
-                <label>Street / Building</label>
-                <input v-model="buyer.locationMeta.addressLine" list="profile-address-options" type="text">
-                <datalist id="profile-address-options">
-                  <option v-for="address in addressOptions" :key="address" :value="address" />
-                </datalist>
-              </div>
-
-              <div class="form-group">
-                <label>Latitude</label>
-                <input v-model="buyer.locationMeta.latitude" type="number" step="0.000001">
-              </div>
-
-              <div class="form-group">
-                <label>Longitude</label>
-                <input v-model="buyer.locationMeta.longitude" type="number" step="0.000001">
-              </div>
-            </div>
-
-            <button type="button" class="btn-location" @click="useCurrentPosition" :disabled="locating">
-              {{ locating ? 'Getting location...' : 'Use Current Position' }}
-            </button>
-          </div>
-
-          <button @click="saveProfile" class="btn btn-primary">Save Changes</button>
-        </div>
-      </div>
-    </div>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
+      </section>
+    </main>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  RWANDA_DISTRICTS,
-  buildLocationMeta,
-  formatLocation,
-  getDistrictOptions,
-  getProvinceOptions,
-  getSavedLocationOptions,
-  getSectorOptions
-} from '../utils/marketIntelligence.js'
+import { buyerApi, clearSession, sellersApi } from '../api.js'
 
 const router = useRouter()
-const locating = ref(false)
-const savedLocationRecords = ref([])
 const buyer = ref({
   id: '',
   name: '',
   email: '',
   phone: '',
   location: '',
-  locationMeta: {
-    province: 'Kigali',
-    district: '',
-    sector: '',
-    cell: '',
-    village: '',
-    addressLine: '',
-    latitude: '',
-    longitude: ''
-  },
   idnumber: '',
   profilePicture: ''
 })
 const editMode = ref(false)
 const sellers = ref([])
-
-const mergeOptions = (...groups) => {
-  return [...new Set(groups.flat().map((item) => String(item || '').trim()).filter(Boolean))]
-    .sort((a, b) => a.localeCompare(b))
-}
-
-const shortLocationOptions = computed(() => getSavedLocationOptions(savedLocationRecords.value, 'location'))
-const provinceOptions = computed(() => mergeOptions(['Kigali'], getProvinceOptions(), getSavedLocationOptions(savedLocationRecords.value, 'province')))
-const districtOptions = computed(() => mergeOptions(getDistrictOptions(buyer.value.locationMeta?.province), getSavedLocationOptions(savedLocationRecords.value, 'district')))
-const sectorOptions = computed(() => mergeOptions(getSectorOptions(buyer.value.locationMeta?.district), getSavedLocationOptions(savedLocationRecords.value, 'sector')))
-const cellOptions = computed(() => getSavedLocationOptions(savedLocationRecords.value, 'cell'))
-const villageOptions = computed(() => getSavedLocationOptions(savedLocationRecords.value, 'village'))
-const addressOptions = computed(() => getSavedLocationOptions(savedLocationRecords.value, 'addressLine'))
-
-const clean = (value = '') => String(value).trim().toLowerCase()
-
-const syncProvinceFromDistrict = () => {
-  const district = RWANDA_DISTRICTS.find((item) => clean(item.district) === clean(buyer.value.locationMeta?.district))
-  if (district) {
-    buyer.value.locationMeta.province = district.province
-  }
-}
-
-const syncDistrictFromSector = () => {
-  const district = RWANDA_DISTRICTS.find((item) => {
-    return Object.keys(item.sectors || {}).some((sector) => clean(sector) === clean(buyer.value.locationMeta?.sector))
-  })
-
-  if (district) {
-    buyer.value.locationMeta.district = buyer.value.locationMeta.district || district.district
-    buyer.value.locationMeta.province = buyer.value.locationMeta.province || district.province
-  }
-}
 
 onMounted(() => {
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null')
@@ -354,33 +210,33 @@ onMounted(() => {
   loadBuyerProfile()
 })
 
-const loadBuyerProfile = () => {
-  const buyers = JSON.parse(localStorage.getItem('buyers') || '[]')
-  sellers.value = JSON.parse(localStorage.getItem('sellers') || '[]')
-  savedLocationRecords.value = [...buyers, ...sellers.value]
-  const currentUser = JSON.parse(localStorage.getItem('currentUser'))
-  
-  const foundBuyer = buyers.find(b => b.id === currentUser.id)
-  if (foundBuyer) {
+const loadBuyerProfile = async () => {
+  try {
+    const [buyerData, sellerData] = await Promise.all([
+      buyerApi.me(),
+      sellersApi.list()
+    ])
+    sellers.value = sellerData.sellers
     buyer.value = {
-      ...foundBuyer,
-      locationMeta: {
-        province: 'Kigali',
-        district: '',
-        sector: '',
-        cell: '',
-        village: '',
-        addressLine: '',
-        latitude: '',
-        longitude: '',
-        ...(foundBuyer.locationMeta || {}),
-        location: foundBuyer.location
-      },
-      favoriteSellers: foundBuyer.favoriteSellers || [],
-      wishlist: foundBuyer.wishlist || []
+      ...buyerData.buyer,
+      favoriteSellers: buyerData.buyer.favoriteSellers || [],
+      wishlist: buyerData.buyer.wishlist || []
     }
+  } catch (error) {
+    alert(error.message)
+    router.push('/login')
   }
 }
+
+const buyerInitials = computed(() => {
+  const name = buyer.value.name || 'Buyer'
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part[0]?.toUpperCase())
+    .join('')
+})
 
 const favoriteSellerDetails = computed(() => {
   return (buyer.value.favoriteSellers || [])
@@ -409,56 +265,33 @@ const handleProfilePictureUpload = (e) => {
     const reader = new FileReader()
     reader.onload = (event) => {
       buyer.value.profilePicture = event.target.result
-      saveBuyerProfile()
+      saveBuyerProfile().catch((error) => alert(error.message))
     }
     reader.readAsDataURL(file)
   }
 }
 
-const saveBuyerProfile = () => {
-  const buyers = JSON.parse(localStorage.getItem('buyers') || '[]')
-  const buyerIndex = buyers.findIndex(b => b.id === buyer.value.id)
-  
-  if (buyerIndex !== -1) {
-    buyers[buyerIndex] = buyer.value
-    localStorage.setItem('buyers', JSON.stringify(buyers))
-  }
-}
-
-const saveProfile = () => {
-  const locationMeta = buildLocationMeta({
-    ...(buyer.value.locationMeta || {}),
-    location: buyer.value.location
+const saveBuyerProfile = async () => {
+  const data = await buyerApi.updateMe({
+    phone: buyer.value.phone,
+    location: buyer.value.location,
+    profilePicture: buyer.value.profilePicture
   })
-  buyer.value.locationMeta = locationMeta
-  buyer.value.location = formatLocation(locationMeta)
-  saveBuyerProfile()
-  editMode.value = false
-  alert('Profile updated successfully!')
+  buyer.value = {
+    ...data.buyer,
+    favoriteSellers: data.buyer.favoriteSellers || [],
+    wishlist: data.buyer.wishlist || []
+  }
 }
 
-const useCurrentPosition = () => {
-  if (!navigator.geolocation) {
-    alert('Current position is not available in this browser.')
-    return
+const saveProfile = async () => {
+  try {
+    await saveBuyerProfile()
+    editMode.value = false
+    alert('Profile updated successfully!')
+  } catch (error) {
+    alert(error.message)
   }
-
-  locating.value = true
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      buyer.value.locationMeta = {
-        ...(buyer.value.locationMeta || {}),
-        latitude: Number(position.coords.latitude.toFixed(6)),
-        longitude: Number(position.coords.longitude.toFixed(6))
-      }
-      locating.value = false
-    },
-    () => {
-      locating.value = false
-      alert('Could not get your current position. You can still enter the address manually.')
-    },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-  )
 }
 
 const toggleEditMode = () => {
@@ -474,295 +307,331 @@ const scrollToSection = (sectionId) => {
 }
 
 const logout = () => {
-  localStorage.removeItem('currentUser')
+  clearSession()
   router.push('/')
 }
 </script>
 
 <style scoped>
-.buyer-dashboard-container {
-  min-height: 100vh;
-  background: #f8f9fa;
-}
-
-.navbar {
-  background: white;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  padding: 1rem 2rem;
-}
-
-.nav-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logo {
-  font-size: 1.5rem;
-  color: #2c3e50;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.nav-links {
-  display: flex;
-  gap: 1.5rem;
-  align-items: center;
-}
-
-.nav-link {
-  color: #666;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.3s;
-}
-
-.nav-link:hover {
-  color: #3498db;
-}
-
-.dashboard-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-.profile-section {
-  margin-bottom: 3rem;
-}
-
-.profile-card {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+.buyer-dashboard {
+  background: var(--page);
   display: grid;
-  grid-template-columns: 200px 1fr;
-  gap: 2rem;
-  align-items: start;
+  grid-template-columns: 280px minmax(0, 1fr);
+  min-height: 100vh;
 }
 
-.profile-picture-wrapper {
+.dashboard-sidebar {
+  background: #111827;
+  color: #ffffff;
   display: flex;
   flex-direction: column;
+  gap: 1.25rem;
+  min-height: 100vh;
+  padding: 1.2rem;
+  position: sticky;
+  top: 0;
+}
+
+.sidebar-brand {
   align-items: center;
-  gap: 1rem;
+  color: #ffffff;
+  display: flex;
+  gap: 0.75rem;
+  text-decoration: none;
+}
+
+.sidebar-brand span {
+  align-items: center;
+  background: var(--accent);
+  border-radius: 8px;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 850;
+  height: 2.3rem;
+  justify-content: center;
+  width: 2.3rem;
+}
+
+.buyer-card {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-block: 1.1rem;
+}
+
+.avatar-wrap {
+  align-items: flex-end;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.profile-picture,
+.profile-picture-placeholder {
+  border-radius: 8px;
+  height: 72px;
+  width: 72px;
 }
 
 .profile-picture {
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
   object-fit: cover;
-  border: 4px solid #3498db;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .profile-picture-placeholder {
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
   align-items: center;
+  background: #263244;
+  color: #ffffff;
+  display: flex;
+  font-weight: 850;
   justify-content: center;
-  border: 4px solid #e0e0e0;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.placeholder-icon {
-  font-size: 4rem;
 }
 
 .upload-button {
-  background: #3498db;
-  color: white;
-  padding: 0.6rem 1.2rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 6px;
+  color: #ffffff;
   cursor: pointer;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: all 0.3s;
-  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.35rem 0.55rem;
 }
 
-.upload-button:hover {
-  background: #2980b9;
-  transform: translateY(-2px);
+.upload-button input {
+  display: none;
 }
 
-.profile-info h1 {
-  margin: 0 0 1.5rem;
-  color: #2c3e50;
-  font-size: 2rem;
+.buyer-card h1 {
+  color: #ffffff;
+  font-size: 1.15rem;
+  margin-top: 0.8rem;
+}
+
+.buyer-card p {
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 0.88rem;
+}
+
+.side-nav {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.side-link {
+  background: transparent;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.76);
+  cursor: pointer;
+  font-weight: 750;
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.side-link:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: #ffffff;
+}
+
+.logout-button {
+  margin-top: auto;
+  width: 100%;
+}
+
+.dashboard-main {
+  display: grid;
+  gap: 1.25rem;
+  padding: clamp(1rem, 3vw, 2rem);
+}
+
+.dashboard-topbar {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dashboard-topbar h2 {
+  font-size: 2.25rem;
+  line-height: 1.1;
+  margin-top: 0.25rem;
+}
+
+.profile-panel,
+.saved-section,
+.edit-section {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+}
+
+.profile-panel {
+  align-items: start;
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: minmax(260px, 0.55fr) 1fr;
+  padding: 1.25rem;
+}
+
+.profile-copy h3 {
+  font-size: 1.2rem;
+  margin-top: 0.35rem;
+}
+
+.profile-copy p {
+  margin-top: 0.45rem;
+}
+
+.panel-label {
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 850;
+  text-transform: uppercase;
 }
 
 .buyer-details {
   display: grid;
-  gap: 1rem;
+  gap: 0.7rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .detail-item {
-  display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: 1rem;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.85rem;
 }
 
-.label {
-  font-weight: 600;
-  color: #2c3e50;
+.detail-item span,
+.detail-item strong {
+  display: block;
 }
 
-.value {
-  color: #666;
+.detail-item span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+
+.detail-item strong {
+  color: var(--ink);
+  font-size: 0.95rem;
+  margin-top: 0.2rem;
   word-break: break-word;
-}
-
-.quick-actions {
-  margin-bottom: 3rem;
-}
-
-.quick-actions h2 {
-  margin-bottom: 1.5rem;
-  color: #2c3e50;
-  font-size: 1.5rem;
-}
-
-.actions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-}
-
-.action-card {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s;
-  text-decoration: none;
-  color: inherit;
-  border: 2px solid transparent;
-}
-
-.action-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-  border-color: #3498db;
-}
-
-.action-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-}
-
-.action-card h3 {
-  margin: 1rem 0;
-  color: #2c3e50;
-}
-
-.action-card p {
-  color: #7f8c8d;
-  font-size: 0.9rem;
-}
-
-.statistics-section {
-  margin-bottom: 3rem;
-}
-
-.statistics-section h2 {
-  margin-bottom: 1.5rem;
-  color: #2c3e50;
-  font-size: 1.5rem;
 }
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
+  gap: 0.85rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .stat-box {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  border-left: 4px solid #3498db;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  padding: 1rem;
 }
 
-.stat-icon {
-  font-size: 2rem;
+.stat-box span,
+.stat-box strong {
+  display: block;
 }
 
-.stat-info {
-  display: flex;
-  flex-direction: column;
+.stat-box span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 750;
 }
 
-.stat-label {
-  color: #7f8c8d;
-  font-size: 0.9rem;
-}
-
-.stat-value {
+.stat-box strong {
+  color: var(--ink);
   font-size: 1.8rem;
-  font-weight: bold;
-  color: #2c3e50;
+  line-height: 1;
+  margin-top: 0.45rem;
 }
 
-.saved-section {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  margin-bottom: 3rem;
+.quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
 }
 
-.saved-section h2 {
-  margin: 0 0 1.5rem;
-  color: #2c3e50;
+.action-chip {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 750;
+  padding: 0.5rem 0.8rem;
+  transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.action-chip:hover {
+  border-color: rgba(194, 65, 12, 0.5);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.saved-section,
+.edit-section {
+  padding: 1.2rem;
+}
+
+.section-title {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.section-title h3 {
+  font-size: 1.25rem;
+  margin-top: 0.25rem;
+}
+
+.text-link {
+  color: var(--accent);
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-decoration: none;
 }
 
 .saved-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem;
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 }
 
 .saved-card {
-  display: grid;
-  grid-template-columns: 90px 1fr;
-  gap: 1rem;
   align-items: center;
-  padding: 1rem;
-  border: 1px solid #e0e0e0;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
   border-radius: 8px;
-  text-decoration: none;
   color: inherit;
-  transition: all 0.3s;
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: 76px 1fr;
+  padding: 0.75rem;
+  text-decoration: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .saved-card:hover {
-  border-color: #3498db;
-  transform: translateY(-3px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+  border-color: rgba(194, 65, 12, 0.38);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .saved-image,
 .saved-image-placeholder {
-  width: 90px;
-  height: 90px;
   border-radius: 8px;
+  height: 76px;
+  width: 76px;
 }
 
 .saved-image {
@@ -770,170 +639,109 @@ const logout = () => {
 }
 
 .saved-image-placeholder {
-  background: #ecf0f1;
-  color: #7f8c8d;
-  display: flex;
   align-items: center;
+  background: #e2e8f0;
+  color: var(--muted);
+  display: flex;
+  font-size: 0.82rem;
+  font-weight: 850;
   justify-content: center;
-  font-weight: 700;
 }
 
-.saved-info h3 {
-  color: #2c3e50;
+.saved-info h4 {
   font-size: 1rem;
-  margin: 0 0 0.4rem;
 }
 
 .saved-info p {
-  color: #666;
-  margin: 0 0 0.4rem;
+  font-size: 0.9rem;
+  margin-top: 0.2rem;
 }
 
 .saved-info span {
-  color: #3498db;
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.mini-empty {
-  background: #f8f9fa;
-  border-radius: 8px;
-  color: #7f8c8d;
-  padding: 1.5rem;
-  text-align: center;
-}
-
-.edit-section {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.edit-section h2 {
-  margin-bottom: 1.5rem;
-  color: #2c3e50;
+  color: var(--accent);
+  display: inline-block;
+  font-size: 0.82rem;
+  font-weight: 800;
+  margin-top: 0.25rem;
 }
 
 .edit-form {
-  margin-top: 1.5rem;
-  padding: 1.5rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.location-panel {
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-}
-
-.location-grid {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 720px;
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  display: grid;
+  gap: 0.4rem;
 }
 
 .form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: #2c3e50;
-  font-weight: 600;
+  color: var(--ink);
+  font-size: 0.88rem;
+  font-weight: 800;
 }
 
 .form-group input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 2px solid #e0e0e0;
+  border: 1px solid var(--line-strong);
   border-radius: 6px;
-  font-size: 1rem;
-  transition: border-color 0.3s;
+  color: var(--ink);
+  padding: 0.7rem 0.8rem;
+  width: 100%;
 }
 
 .form-group input:focus {
+  border-color: var(--accent);
   outline: none;
-  border-color: #3498db;
 }
 
-.btn {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-  font-size: 0.95rem;
-}
-
-.btn-primary {
-  background: #3498db;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #2980b9;
-  transform: translateY(-2px);
-}
-
-.btn-secondary {
-  background: #95a5a6;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: #7f8c8d;
-}
-
-.btn-location {
-  background: #fff;
-  border: 1px solid #3498db;
-  border-radius: 6px;
-  color: #2471a3;
-  cursor: pointer;
-  font-weight: 700;
-  padding: 0.7rem 1rem;
-  width: auto;
-}
-
-.btn-location:disabled {
-  cursor: wait;
-  opacity: 0.7;
-}
-
-@media (max-width: 768px) {
-  .profile-card {
-    grid-template-columns: 1fr;
-    text-align: center;
+@media (max-width: 980px) {
+  .dashboard-topbar h2 {
+    font-size: 1.85rem;
   }
 
-  .detail-item {
+  .buyer-dashboard {
     grid-template-columns: 1fr;
-    text-align: center;
   }
 
-  .nav-content {
+  .dashboard-sidebar {
+    min-height: auto;
+    position: relative;
+  }
+
+  .side-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profile-panel,
+  .buyer-details,
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-topbar,
+  .section-title {
+    align-items: flex-start;
     flex-direction: column;
-    gap: 1rem;
   }
 
-  .nav-links {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .nav-link {
-    width: 100%;
-    text-align: center;
-  }
-
-  .location-grid {
+  .side-nav,
+  .profile-panel,
+  .buyer-details,
+  .stats-grid {
     grid-template-columns: 1fr;
+  }
+
+  .saved-card {
+    grid-template-columns: 64px 1fr;
+  }
+
+  .saved-image,
+  .saved-image-placeholder {
+    height: 64px;
+    width: 64px;
   }
 }
 </style>

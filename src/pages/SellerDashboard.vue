@@ -1,163 +1,159 @@
 <template>
-  <div class="dashboard-container">
-    <nav class="navbar">
-      <div class="nav-content">
-        <router-link to="/" class="logo">🏪 Kigali Great Market</router-link>
-        <div class="nav-links">
-          <router-link to="/marketplace" class="nav-link">All Sellers</router-link>
-          <span class="welcome">Welcome, {{ sellerName }}</span>
-          <button @click="logout" class="btn btn-logout">Logout</button>
-        </div>
-      </div>
-    </nav>
+  <div class="seller-dashboard">
+    <aside class="dashboard-sidebar">
+      <router-link to="/" class="sidebar-brand">
+        <span>KGM</span>
+        <strong>Kigali Great Market</strong>
+      </router-link>
 
-    <div class="dashboard-content">
-      <div class="sidebar">
-        <div class="seller-info">
-          <img v-if="seller && seller.idphoto" :src="seller.idphoto" alt="ID Photo" class="id-photo" />
-          <h3>{{ seller?.businessName }}</h3>
-          <p class="location">📍 {{ seller?.location }}</p>
-          <p class="phone">📞 {{ seller?.phone }}</p>
-          <p class="email">✉️ {{ seller?.email }}</p>
-          <div class="seller-stats">
-            <div class="seller-stat">
-              <strong>{{ favoriteBuyers.length }}</strong>
-              <span>buyers added you to favorite</span>
-            </div>
-            <div class="seller-stat">
-              <strong>{{ wishlistedProducts.length }}</strong>
-              <span>products added to wishlists</span>
-            </div>
-          </div>
+      <div class="seller-card">
+        <img v-if="seller && seller.idphoto" :src="seller.idphoto" alt="Seller profile" class="id-photo" />
+        <div v-else class="seller-photo-placeholder">
+          {{ seller?.businessName?.charAt(0)?.toUpperCase() || 'S' }}
         </div>
+        <h1>{{ seller?.businessName || 'Seller Dashboard' }}</h1>
+        <p>{{ seller?.location || 'Location not set' }}</p>
       </div>
 
-      <div class="main-content">
-        <div class="insights-section">
-          <h2>Buyer Interest</h2>
-          <div class="insights-grid">
-            <div class="insight-panel">
-              <h3>Buyers Who Favorited You</h3>
-              <div v-if="favoriteBuyers.length > 0" class="interest-list">
-                <div v-for="buyer in favoriteBuyers" :key="buyer.id" class="interest-row">
-                  <span>{{ buyer.name }}</span>
-                  <small>{{ buyer.email }}</small>
-                </div>
-              </div>
-              <p v-else class="empty-note">No buyers have added you to favorites yet.</p>
-            </div>
+      <nav class="side-nav">
+        <button class="side-link" @click="scrollToSection('products')">Products</button>
+        <button class="side-link" @click="scrollToSection('insights')">Buyer Interest</button>
+        <router-link to="/marketplace" class="side-link">All Sellers</router-link>
+      </nav>
 
-            <div class="insight-panel">
-              <h3>Products in Buyer Wishlists</h3>
-              <div v-if="wishlistedProducts.length > 0" class="interest-list">
-                <div v-for="item in wishlistedProducts" :key="`${item.buyerId}-${item.productId}`" class="interest-row">
-                  <span>{{ item.productName }}</span>
-                  <small>{{ item.buyerName }} added this product</small>
-                </div>
-              </div>
-              <p v-else class="empty-note">No products have been added to wishlists yet.</p>
-            </div>
+      <div class="sidebar-stats">
+        <div class="seller-stat">
+          <strong>{{ favoriteBuyers.length }}</strong>
+          <span>buyer favorites</span>
+        </div>
+        <div class="seller-stat">
+          <strong>{{ wishlistedProducts.length }}</strong>
+          <span>wishlist products</span>
+        </div>
+      </div>
+
+      <button @click="logout" class="btn btn-secondary logout-button">Logout</button>
+    </aside>
+
+    <main class="dashboard-main">
+      <header class="dashboard-topbar">
+        <div>
+          <span class="section-kicker">Seller dashboard</span>
+          <h2>Manage {{ sellerName || 'your store' }}</h2>
+        </div>
+        <button @click="showAddForm = true" class="btn btn-primary">Add Product</button>
+      </header>
+
+      <section id="insights" class="insights-section">
+        <div class="section-title">
+          <div>
+            <span class="panel-label">Buyer signals</span>
+            <h3>Buyer Interest</h3>
           </div>
         </div>
 
-        <div class="header">
-          <h2>My Products</h2>
-          <button @click="showAddForm = true" class="btn btn-primary">+ Add Product</button>
+        <div class="insights-grid">
+          <div class="insight-panel">
+            <h4>Buyers Who Favorited You</h4>
+            <div v-if="favoriteBuyers.length > 0" class="interest-list">
+              <div v-for="buyer in favoriteBuyers" :key="buyer.id" class="interest-row">
+                <span>{{ buyer.name }}</span>
+                <small>{{ buyer.email }}</small>
+              </div>
+            </div>
+            <p v-else class="empty-note">No buyers have added you to favorites yet.</p>
+          </div>
+
+          <div class="insight-panel">
+            <h4>Products in Buyer Wishlists</h4>
+            <div v-if="wishlistedProducts.length > 0" class="interest-list">
+              <div v-for="item in wishlistedProducts" :key="`${item.buyerId}-${item.productId}`" class="interest-row">
+                <span>{{ item.productName }}</span>
+                <small>{{ item.buyerName }} added this product</small>
+              </div>
+            </div>
+            <p v-else class="empty-note">No products have been added to wishlists yet.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="products" class="products-section">
+        <div class="section-title">
+          <div>
+            <span class="panel-label">Store inventory</span>
+            <h3>My Products</h3>
+          </div>
+          <button @click="showAddForm = true" class="btn btn-primary">Add Product</button>
         </div>
 
-        <!-- Add Product Form -->
-        <div v-if="showAddForm" class="add-product-form">
-          <div class="form-overlay">
-            <div class="form-box">
-              <div class="form-header">
-                <h3>{{ editingProduct ? 'Edit Product' : 'Add New Product' }}</h3>
-                <button @click="closeForm" class="close-btn">✕</button>
+        <div v-if="seller && seller.products && seller.products.length > 0" class="products-grid">
+          <div v-for="product in seller.products" :key="product.id" class="product-card">
+            <div class="card-image">
+              <img :src="product.image" :alt="product.name" />
+            </div>
+            <div class="card-content">
+              <h4>{{ product.name }}</h4>
+              <p class="description">{{ product.description || 'No description yet.' }}</p>
+              <div class="product-meta">
+                <strong>${{ product.price.toFixed(2) }}</strong>
+                <span>{{ (product.likes || []).length }} likes</span>
               </div>
-
-              <form @submit.prevent="saveProduct">
-                <div class="form-group">
-                  <label for="productName">Product Name</label>
-                  <input 
-                    v-model="newProduct.name" 
-                    type="text" 
-                    id="productName"
-                    required
-                  />
-                </div>
-
-                <div class="form-group">
-                  <label for="productPrice">Price</label>
-                  <input 
-                    v-model.number="newProduct.price" 
-                    type="number" 
-                    id="productPrice"
-                    step="0.01"
-                    required
-                  />
-                </div>
-
-                <div class="form-group">
-                  <label for="productImage">Product Image</label>
-                  <input 
-                    @change="handleImageUpload"
-                    type="file" 
-                    id="productImage"
-                    accept="image/*"
-                    :required="!newProduct.image"
-                  />
-                  <div v-if="newProduct.image" class="image-preview">
-                    <img :src="newProduct.image" alt="Product" />
-                  </div>
-                </div>
-
-                <div class="form-group">
-                  <label for="productDescription">Description</label>
-                  <textarea 
-                    v-model="newProduct.description" 
-                    id="productDescription"
-                    rows="4"
-                  ></textarea>
-                </div>
-
-                <div class="category-preview">
-                  <span>Auto category</span>
-                  <strong>{{ productCategoryPreview.category }}</strong>
-                  <small>{{ Math.round(productCategoryPreview.categoryConfidence * 100) }}% confidence</small>
-                </div>
-
-                <div class="form-actions">
-                  <button type="submit" class="btn btn-primary">{{ editingProduct ? 'Update' : 'Add' }} Product</button>
-                  <button type="button" @click="closeForm" class="btn btn-secondary">Cancel</button>
-                </div>
-              </form>
+            </div>
+            <div class="card-actions">
+              <button @click="editProduct(product)" class="btn btn-edit">Edit</button>
+              <button @click="deleteProduct(product.id)" class="btn btn-delete">Delete</button>
             </div>
           </div>
         </div>
+        <div v-else class="empty-state">
+          <p>No products yet. Add your first product.</p>
+        </div>
+      </section>
+    </main>
 
-        <!-- Products Grid -->
-        <div class="products-grid">
-          <div v-if="seller && seller.products && seller.products.length > 0">
-            <div v-for="product in seller.products" :key="product.id" class="product-card">
-              <div class="card-image">
-                <img :src="product.image" :alt="product.name" />
-              </div>
-              <div class="card-content">
-                <h4>{{ product.name }}</h4>
-                <span class="category-tag">{{ product.category || 'General Goods' }}</span>
-                <p class="description">{{ product.description }}</p>
-                <div class="price">
-                  <strong>${{ product.price.toFixed(2) }}</strong>
-                </div>
-              </div>
-              <div class="card-actions">
-                <button @click="editProduct(product)" class="btn btn-edit">Edit</button>
-                <button @click="deleteProduct(product.id)" class="btn btn-delete">Delete</button>
+    <div v-if="showAddForm" class="add-product-form">
+      <div class="form-overlay">
+        <div class="form-box">
+          <div class="form-header">
+            <h3>{{ editingProduct ? 'Edit Product' : 'Add New Product' }}</h3>
+            <button @click="closeForm" class="close-btn" title="Close form">x</button>
+          </div>
+
+          <form @submit.prevent="saveProduct">
+            <div class="form-group">
+              <label for="productName">Product Name</label>
+              <input v-model="newProduct.name" type="text" id="productName" required />
+            </div>
+
+            <div class="form-group">
+              <label for="productPrice">Price</label>
+              <input v-model.number="newProduct.price" type="number" id="productPrice" step="0.01" required />
+            </div>
+
+            <div class="form-group">
+              <label for="productImage">Product Image</label>
+              <input
+                @change="handleImageUpload"
+                type="file"
+                id="productImage"
+                accept="image/*"
+                :required="!editingProduct"
+              />
+              <div v-if="newProduct.image" class="image-preview">
+                <img :src="newProduct.image" alt="Product preview" />
               </div>
             </div>
-          </div>
-          <div v-else class="empty-state">
-            <p>No products yet. Add your first product!</p>
-          </div>
+
+            <div class="form-group">
+              <label for="productDescription">Description</label>
+              <textarea v-model="newProduct.description" id="productDescription" rows="4"></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">{{ editingProduct ? 'Update' : 'Add' }} Product</button>
+              <button type="button" @click="closeForm" class="btn btn-secondary">Cancel</button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -165,16 +161,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { classifyProduct, enrichProduct } from '../utils/marketIntelligence.js'
+import { clearSession, sellersApi } from '../api.js'
 
 const router = useRouter()
 const seller = ref(null)
 const sellerName = ref('')
 const showAddForm = ref(false)
 const editingProduct = ref(null)
-const buyers = ref([])
+const favoriteBuyers = ref([])
+const wishlistedProducts = ref([])
 
 const newProduct = ref({
   name: '',
@@ -182,8 +179,6 @@ const newProduct = ref({
   image: '',
   description: ''
 })
-
-const productCategoryPreview = computed(() => classifyProduct(newProduct.value))
 
 onMounted(() => {
   const currentUser = JSON.parse(localStorage.getItem('currentUser'))
@@ -195,46 +190,21 @@ onMounted(() => {
   loadSeller(currentUser.id)
 })
 
-const loadSeller = (sellerId) => {
-  const sellers = JSON.parse(localStorage.getItem('sellers') || '[]')
-  buyers.value = JSON.parse(localStorage.getItem('buyers') || '[]')
-  const foundSeller = sellers.find(s => s.id === sellerId)
-  
-  if (foundSeller) {
-    foundSeller.products = (foundSeller.products || []).map(enrichProduct)
-    seller.value = foundSeller
-    sellerName.value = foundSeller.businessName
-
-    const sellerIndex = sellers.findIndex(s => s.id === sellerId)
-    if (sellerIndex !== -1) {
-      sellers[sellerIndex] = foundSeller
-      localStorage.setItem('sellers', JSON.stringify(sellers))
-    }
+const loadSeller = async (sellerId) => {
+  try {
+    const [sellerData, insightData] = await Promise.all([
+      sellersApi.get(sellerId),
+      sellersApi.insights(sellerId)
+    ])
+    seller.value = sellerData.seller
+    sellerName.value = sellerData.seller.businessName
+    favoriteBuyers.value = insightData.favoriteBuyers
+    wishlistedProducts.value = insightData.wishlistedProducts
+  } catch (error) {
+    alert(error.message)
+    router.push('/login')
   }
 }
-
-const favoriteBuyers = computed(() => {
-  if (!seller.value) return []
-  return buyers.value.filter(buyer => (buyer.favoriteSellers || []).includes(seller.value.id))
-})
-
-const wishlistedProducts = computed(() => {
-  if (!seller.value) return []
-
-  return buyers.value.flatMap(buyer => {
-    return (buyer.wishlist || [])
-      .filter(item => item.sellerId === seller.value.id)
-      .map(item => {
-        const product = seller.value.products?.find(p => p.id === item.productId)
-        return {
-          ...item,
-          buyerId: buyer.id,
-          buyerName: buyer.name,
-          productName: product?.name || item.productName
-        }
-      })
-  })
-})
 
 const handleImageUpload = (e) => {
   const file = e.target.files[0]
@@ -247,43 +217,28 @@ const handleImageUpload = (e) => {
   }
 }
 
-const saveProduct = () => {
+const saveProduct = async () => {
   if (!newProduct.value.name || !newProduct.value.price || !newProduct.value.image) {
     alert('Please fill in all required fields')
     return
   }
 
-  const sellers = JSON.parse(localStorage.getItem('sellers') || '[]')
-  const sellerIndex = sellers.findIndex(s => s.id === seller.value.id)
-
-  if (sellerIndex !== -1) {
+  try {
+    const payload = {
+      ...newProduct.value,
+      price: Number(newProduct.value.price)
+    }
+    let data
     if (editingProduct.value) {
-      // Update existing product
-      const productIndex = sellers[sellerIndex].products.findIndex(p => p.id === editingProduct.value.id)
-      if (productIndex !== -1) {
-        const existingProduct = sellers[sellerIndex].products[productIndex]
-        sellers[sellerIndex].products[productIndex] = {
-          ...enrichProduct({
-            ...existingProduct,
-            ...newProduct.value,
-            id: editingProduct.value.id
-          })
-        }
-      }
+      data = await sellersApi.updateProduct(seller.value.id, editingProduct.value.id, payload)
     } else {
-      // Add new product
-      const product = enrichProduct({
-        id: Date.now(),
-        ...newProduct.value,
-        likes: [],
-        comments: []
-      })
-      sellers[sellerIndex].products.push(product)
+      data = await sellersApi.addProduct(seller.value.id, payload)
     }
 
-    localStorage.setItem('sellers', JSON.stringify(sellers))
-    seller.value = sellers[sellerIndex]
+    seller.value = data.seller
     closeForm()
+  } catch (error) {
+    alert(error.message)
   }
 }
 
@@ -295,14 +250,11 @@ const editProduct = (product) => {
 
 const deleteProduct = (productId) => {
   if (confirm('Are you sure you want to delete this product?')) {
-    const sellers = JSON.parse(localStorage.getItem('sellers') || '[]')
-    const sellerIndex = sellers.findIndex(s => s.id === seller.value.id)
-
-    if (sellerIndex !== -1) {
-      sellers[sellerIndex].products = sellers[sellerIndex].products.filter(p => p.id !== productId)
-      localStorage.setItem('sellers', JSON.stringify(sellers))
-      seller.value = sellers[sellerIndex]
-    }
+    sellersApi.deleteProduct(seller.value.id, productId)
+      .then((data) => {
+        seller.value = data.seller
+      })
+      .catch((error) => alert(error.message))
   }
 }
 
@@ -317,114 +269,126 @@ const closeForm = () => {
   }
 }
 
+const scrollToSection = (sectionId) => {
+  document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 const logout = () => {
-  localStorage.removeItem('currentUser')
+  clearSession()
   router.push('/')
 }
 </script>
 
 <style scoped>
-.dashboard-container {
-  min-height: 100vh;
-  background: #f8f9fa;
-}
-
-.navbar {
-  background: #fff;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  padding: 1rem 2rem;
-}
-
-.nav-content {
-  max-width: 1400px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logo {
-  font-size: 1.5rem;
-  color: #2c3e50;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-}
-
-.welcome {
-  color: #2c3e50;
-  font-weight: 600;
-}
-
-.btn-logout {
-  background: #e74c3c;
-  color: white;
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.dashboard-content {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 2rem;
+.seller-dashboard {
+  background: var(--page);
   display: grid;
-  grid-template-columns: 250px 1fr;
-  gap: 2rem;
+  grid-template-columns: 290px minmax(0, 1fr);
+  min-height: 100vh;
 }
 
-.sidebar {
-  background: white;
-  border-radius: 8px;
-  padding: 2rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  height: fit-content;
+.dashboard-sidebar {
+  background: #111827;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  min-height: 100vh;
+  padding: 1.2rem;
   position: sticky;
-  top: 100px;
+  top: 0;
 }
 
-.seller-info {
-  text-align: center;
+.sidebar-brand {
+  align-items: center;
+  color: #ffffff;
+  display: flex;
+  gap: 0.75rem;
+  text-decoration: none;
+}
+
+.sidebar-brand span {
+  align-items: center;
+  background: var(--accent);
+  border-radius: 8px;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 850;
+  height: 2.3rem;
+  justify-content: center;
+  width: 2.3rem;
+}
+
+.seller-card {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-block: 1rem;
+}
+
+.id-photo,
+.seller-photo-placeholder {
+  border-radius: 8px;
+  height: 92px;
+  width: 92px;
 }
 
 .id-photo {
-  width: 150px;
-  height: 150px;
-  border-radius: 8px;
   object-fit: cover;
-  margin-bottom: 1rem;
-  border: 3px solid #e74c3c;
 }
 
-.seller-info h3 {
-  color: #2c3e50;
-  margin: 1rem 0;
+.seller-photo-placeholder {
+  align-items: center;
+  background: #263244;
+  color: #ffffff;
+  display: flex;
+  font-size: 2rem;
+  font-weight: 850;
+  justify-content: center;
 }
 
-.seller-info p {
-  color: #666;
-  margin: 0.5rem 0;
-  font-size: 0.9rem;
+.seller-card h1 {
+  color: #ffffff;
+  font-size: 1.15rem;
+  margin-top: 0.8rem;
 }
 
-.seller-stats {
-  margin-top: 1.5rem;
+.seller-card p {
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 0.88rem;
+}
+
+.side-nav {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.35rem;
+}
+
+.side-link {
+  background: transparent;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.76);
+  cursor: pointer;
+  font-weight: 750;
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.side-link:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: #ffffff;
+}
+
+.sidebar-stats {
+  display: grid;
+  gap: 0.7rem;
 }
 
 .seller-stat {
-  background: #f8f9fa;
-  border-left: 4px solid #e74c3c;
-  border-radius: 6px;
-  padding: 0.75rem;
-  text-align: left;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 0.85rem;
 }
 
 .seller-stat strong,
@@ -433,64 +397,97 @@ const logout = () => {
 }
 
 .seller-stat strong {
-  color: #2c3e50;
-  font-size: 1.5rem;
+  color: #ffffff;
+  font-size: 1.6rem;
+  line-height: 1;
 }
 
 .seller-stat span {
-  color: #666;
-  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 0.82rem;
+  margin-top: 0.35rem;
 }
 
-.main-content {
-  background: white;
-  border-radius: 8px;
-  padding: 2rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.logout-button {
+  margin-top: auto;
+  width: 100%;
 }
 
-.header {
+.dashboard-main {
+  display: grid;
+  gap: 1.25rem;
+  padding: clamp(1rem, 3vw, 2rem);
+}
+
+.dashboard-topbar {
+  align-items: center;
   display: flex;
   justify-content: space-between;
+  gap: 1rem;
+}
+
+.dashboard-topbar h2 {
+  font-size: 2.25rem;
+  line-height: 1.1;
+  margin-top: 0.25rem;
+}
+
+.insights-section,
+.products-section {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+  padding: 1.2rem;
+}
+
+.section-title {
   align-items: center;
-  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
-.insights-section {
-  margin-bottom: 2rem;
+.section-title h3 {
+  font-size: 1.25rem;
+  margin-top: 0.25rem;
 }
 
-.insights-section h2 {
-  color: #2c3e50;
-  margin: 0 0 1rem;
+.panel-label {
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 850;
+  text-transform: uppercase;
 }
 
 .insights-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .insight-panel {
-  border: 1px solid #e0e0e0;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
   border-radius: 8px;
   padding: 1rem;
 }
 
-.insight-panel h3 {
-  color: #2c3e50;
-  margin: 0 0 1rem;
+.insight-panel h4 {
   font-size: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .interest-list {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.65rem;
 }
 
 .interest-row {
-  background: #f8f9fa;
-  border-radius: 6px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
   padding: 0.75rem;
 }
 
@@ -500,301 +497,261 @@ const logout = () => {
 }
 
 .interest-row span {
-  color: #2c3e50;
-  font-weight: 700;
+  color: var(--ink);
+  font-weight: 800;
 }
 
 .interest-row small {
-  color: #666;
-  margin-top: 0.25rem;
+  color: var(--muted);
+  margin-top: 0.2rem;
 }
 
 .empty-note {
-  background: #f8f9fa;
-  border-radius: 6px;
-  color: #777;
-  margin: 0;
+  background: #ffffff;
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+  color: var(--muted);
   padding: 1rem;
 }
 
-.header h2 {
-  color: #2c3e50;
-  margin: 0;
-}
-
-.btn {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.btn-primary {
-  background: #e74c3c;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #c0392b;
-}
-
-.btn-secondary {
-  background: #bdc3c7;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: #95a5a6;
-}
-
-.btn-edit {
-  background: #3498db;
-  color: white;
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-}
-
-.btn-delete {
-  background: #e74c3c;
-  color: white;
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-}
-
-/* Add Product Form */
-.add-product-form {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.form-overlay {
-  width: 100%;
-  max-width: 500px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-  animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateY(-50px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-.form-box {
-  padding: 2rem;
-}
-
-.form-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.form-header h3 {
-  color: #2c3e50;
-  margin: 0;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: #666;
-}
-
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: #2c3e50;
-  font-weight: 600;
-}
-
-.form-group input,
-.form-group textarea {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
-  font-family: inherit;
-  box-sizing: border-box;
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: #e74c3c;
-}
-
-.image-preview {
-  margin-top: 1rem;
-  border: 2px solid #ddd;
-  border-radius: 4px;
-  padding: 1rem;
-  text-align: center;
-}
-
-.image-preview img {
-  max-width: 100%;
-  max-height: 200px;
-  border-radius: 4px;
-}
-
-.form-actions {
-  display: flex;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.category-preview {
-  background: #f8f9fa;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  display: grid;
-  gap: 0.25rem;
-  padding: 0.85rem;
-}
-
-.category-preview span,
-.category-preview small {
-  color: #666;
-  font-size: 0.85rem;
-}
-
-.category-preview strong {
-  color: #2c3e50;
-}
-
-.form-actions button {
-  flex: 1;
-}
-
-/* Products Grid */
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 2rem;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
 }
 
 .product-card {
-  border: 1px solid #ddd;
+  background: #ffffff;
+  border: 1px solid var(--line);
   border-radius: 8px;
   overflow: hidden;
-  transition: transform 0.3s, box-shadow 0.3s;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .product-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+  border-color: rgba(194, 65, 12, 0.36);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .card-image {
-  width: 100%;
-  height: 200px;
+  background: #e2e8f0;
+  height: 165px;
   overflow: hidden;
-  background: #f0f0f0;
 }
 
 .card-image img {
-  width: 100%;
   height: 100%;
   object-fit: cover;
+  width: 100%;
 }
 
 .card-content {
-  padding: 1rem;
+  padding: 0.9rem;
 }
 
 .card-content h4 {
-  color: #2c3e50;
-  margin: 0 0 0.5rem 0;
-  font-size: 1.1rem;
-}
-
-.category-tag {
-  background: #edf6fd;
-  border: 1px solid #aed6f1;
-  border-radius: 999px;
-  color: #2471a3;
-  display: inline-flex;
-  font-size: 0.78rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-  padding: 0.25rem 0.55rem;
+  font-size: 1rem;
 }
 
 .description {
-  color: #666;
-  font-size: 0.9rem;
-  margin: 0.5rem 0;
-  max-height: 60px;
+  color: var(--muted);
+  display: -webkit-box;
+  font-size: 0.88rem;
+  margin-top: 0.35rem;
+  min-height: 2.6rem;
   overflow: hidden;
-  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
-.price {
-  color: #e74c3c;
-  font-size: 1.3rem;
-  margin: 0.5rem 0;
+.product-meta {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.8rem;
+}
+
+.product-meta strong {
+  color: var(--accent);
+  font-size: 1.1rem;
+}
+
+.product-meta span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 750;
 }
 
 .card-actions {
-  padding: 0 1rem 1rem 1rem;
+  border-top: 1px solid var(--line);
   display: flex;
   gap: 0.5rem;
+  padding: 0.75rem 0.9rem;
 }
 
 .card-actions .btn {
   flex: 1;
+  min-height: 2rem;
+  padding: 0.45rem 0.7rem;
+}
+
+.btn-edit {
+  background: #eff6ff;
+  color: var(--info);
+}
+
+.btn-edit:hover {
+  background: #dbeafe;
+}
+
+.btn-delete {
+  background: #fff1f2;
+  color: var(--danger);
+}
+
+.btn-delete:hover {
+  background: #ffe4e6;
+}
+
+.add-product-form {
+  align-items: center;
+  background: rgba(15, 23, 42, 0.58);
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  left: 0;
+  padding: 1rem;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 1000;
+}
+
+.form-overlay {
+  background: white;
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  max-height: calc(100vh - 2rem);
+  max-width: 560px;
+  overflow: auto;
+  width: 100%;
+}
+
+.form-box {
+  padding: 1.25rem;
+}
+
+.form-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.form-header h3 {
+  font-size: 1.2rem;
+}
+
+.close-btn {
+  align-items: center;
+  background: #eef2f7;
+  border-radius: 6px;
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 850;
+  height: 2rem;
+  justify-content: center;
+  width: 2rem;
+}
+
+.form-group {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 0.9rem;
+}
+
+.form-group label {
+  color: var(--ink);
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.form-group input,
+.form-group textarea {
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  color: var(--ink);
+  padding: 0.7rem 0.8rem;
+  resize: vertical;
+  width: 100%;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.image-preview {
+  border: 1px solid var(--line);
+  border-radius: 8px;
   padding: 0.5rem;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 3rem;
-  color: #666;
+.image-preview img {
+  border-radius: 6px;
+  max-height: 180px;
+  object-fit: cover;
+  width: 100%;
 }
 
-@media (max-width: 768px) {
-  .dashboard-content {
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.1rem;
+}
+
+@media (max-width: 980px) {
+  .dashboard-topbar h2 {
+    font-size: 1.85rem;
+  }
+
+  .seller-dashboard {
     grid-template-columns: 1fr;
   }
 
-  .sidebar {
+  .dashboard-sidebar {
+    min-height: auto;
     position: relative;
-    top: 0;
   }
 
-  .header {
+  .side-nav,
+  .sidebar-stats,
+  .insights-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-topbar,
+  .section-title,
+  .form-actions {
+    align-items: flex-start;
     flex-direction: column;
-    gap: 1rem;
   }
 
-  .products-grid {
+  .side-nav,
+  .sidebar-stats,
+  .insights-grid {
     grid-template-columns: 1fr;
+  }
+
+  .form-actions .btn {
+    width: 100%;
   }
 }
 </style>

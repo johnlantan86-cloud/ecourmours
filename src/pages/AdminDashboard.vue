@@ -89,7 +89,7 @@
                 <th>Phone</th>
                 <th>Location</th>
                 <th>ID Number</th>
-                <th>Password</th>
+                <th>Account</th>
                 <th>Registered</th>
                 <th>Action</th>
               </tr>
@@ -102,7 +102,7 @@
                 <td>{{ buyer.phone }}</td>
                 <td>{{ buyer.location }}</td>
                 <td>{{ buyer.idnumber }}</td>
-                <td>{{ buyer.password }}</td>
+                <td>Protected</td>
                 <td>{{ formatDate(buyer.registeredAt) }}</td>
                 <td>
                   <button @click="deleteUser('buyer', buyer.id)" class="btn btn-danger btn-small">Delete</button>
@@ -133,7 +133,7 @@
                 <th>Phone</th>
                 <th>Location</th>
                 <th>ID Number</th>
-                <th>Password</th>
+                <th>Account</th>
                 <th>Registered</th>
                 <th>Action</th>
               </tr>
@@ -147,7 +147,7 @@
                 <td>{{ seller.phone }}</td>
                 <td>{{ seller.location }}</td>
                 <td>{{ seller.idnumber }}</td>
-                <td>{{ seller.password }}</td>
+                <td>Protected</td>
                 <td>{{ formatDate(seller.registeredAt) }}</td>
                 <td>
                   <button @click="deleteUser('seller', seller.id)" class="btn btn-danger btn-small">Delete</button>
@@ -167,6 +167,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { adminApi, clearSession } from '../api.js'
 
 const router = useRouter()
 const currentAdmin = ref('Admin')
@@ -186,38 +187,44 @@ onMounted(() => {
   loadUsers()
 })
 
-const loadUsers = () => {
-  buyers.value = JSON.parse(localStorage.getItem('buyers') || '[]')
-  sellers.value = JSON.parse(localStorage.getItem('sellers') || '[]')
-  productReports.value = JSON.parse(localStorage.getItem('productReports') || '[]')
+const loadUsers = async () => {
+  try {
+    const data = await adminApi.overview()
+    buyers.value = data.buyers
+    sellers.value = data.sellers
+    productReports.value = data.productReports
+  } catch (error) {
+    alert(error.message)
+    router.push('/admin-login')
+  }
 }
 
-const deleteUser = (type, userId) => {
+const deleteUser = async (type, userId) => {
   const confirmed = confirm(`Are you sure you want to delete this ${type}? This action cannot be undone.`)
   
   if (!confirmed) return
 
-  if (type === 'buyer') {
-    buyers.value = buyers.value.filter(b => b.id !== userId)
-    localStorage.setItem('buyers', JSON.stringify(buyers.value))
-    alert('Buyer deleted successfully')
-  } else if (type === 'seller') {
-    sellers.value = sellers.value.filter(s => s.id !== userId)
-    localStorage.setItem('sellers', JSON.stringify(sellers.value))
-    alert('Seller deleted successfully')
+  try {
+    await adminApi.deleteUser(type, userId)
+    alert(`${type === 'buyer' ? 'Buyer' : 'Seller'} deleted successfully`)
+    loadUsers()
+  } catch (error) {
+    alert(error.message)
   }
-  
-  loadUsers()
 }
 
 const logoutAdmin = () => {
-  localStorage.removeItem('currentUser')
+  clearSession()
   router.push('/')
 }
 
-const deleteProductReport = (reportId) => {
-  productReports.value = productReports.value.filter(report => report.id !== reportId)
-  localStorage.setItem('productReports', JSON.stringify(productReports.value))
+const deleteProductReport = async (reportId) => {
+  try {
+    await adminApi.deleteReport(reportId)
+    productReports.value = productReports.value.filter(report => report.id !== reportId)
+  } catch (error) {
+    alert(error.message)
+  }
 }
 
 const formatDate = (dateString) => {

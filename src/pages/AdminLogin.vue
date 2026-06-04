@@ -50,27 +50,25 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { authApi, saveSession } from '../api.js'
 
 const router = useRouter()
 const form = ref({ email: '', password: '' })
 const error = ref('')
 
-const loginAdmin = () => {
+const loginAdmin = async () => {
   error.value = ''
-  
-  // Hardcoded admin credentials
-  const ADMIN_EMAIL = 'admin@kigali.com'
-  const ADMIN_PASSWORD = 'admin123'
 
-  if (form.value.email === ADMIN_EMAIL && form.value.password === ADMIN_PASSWORD) {
-    localStorage.setItem('currentUser', JSON.stringify({
-      id: 'admin-001',
-      name: 'Admin',
-      type: 'admin'
-    }))
+  try {
+    const session = await authApi.login({
+      type: 'admin',
+      email: form.value.email,
+      password: form.value.password
+    })
+    saveSession(session)
     router.push('/admin-dashboard')
-  } else {
-    error.value = 'Invalid admin credentials'
+  } catch (loginError) {
+    error.value = loginError.message
   }
 }
 </script>

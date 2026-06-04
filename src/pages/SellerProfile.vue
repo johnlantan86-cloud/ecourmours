@@ -1,73 +1,78 @@
 <template>
-  <div class="seller-profile-container">
-    <nav class="navbar">
-      <div class="nav-content">
-        <router-link to="/" class="logo">🏪 Kigali Great Market</router-link>
-        <router-link to="/marketplace" class="back-link">← Back to Marketplace</router-link>
-        <router-link v-if="currentUser" :to="dashboardPath" class="back-link">Dashboard</router-link>
+  <div class="seller-profile-page">
+    <nav class="profile-nav">
+      <router-link to="/" class="brand">
+        <span>KGM</span>
+        <strong>Kigali Great Market</strong>
+      </router-link>
+
+      <div class="nav-links">
+        <router-link to="/marketplace" class="nav-link">Marketplace</router-link>
+        <router-link v-if="currentUser" :to="dashboardPath" class="nav-link">Dashboard</router-link>
         <button v-if="currentUser" @click="logout" class="btn btn-secondary nav-button">Logout</button>
       </div>
     </nav>
 
-    <div v-if="seller" class="profile-content">
-      <div class="seller-header">
+    <main v-if="seller" class="profile-content">
+      <section class="seller-hero">
         <img v-if="seller.idphoto" :src="seller.idphoto" :alt="seller.businessName" class="seller-photo" />
+        <div v-else class="seller-photo-placeholder">
+          {{ seller.businessName?.charAt(0)?.toUpperCase() || 'S' }}
+        </div>
+
         <div class="seller-info">
+          <span class="section-kicker">Seller profile</span>
           <h1>{{ seller.businessName }}</h1>
           <p class="owner-name">Owner: {{ seller.name }}</p>
-          <div class="profile-stats">
-            <div class="stat-pill trust-pill">
-              <strong>{{ sellerTrust.percent }}</strong>
-              <span class="trust-stars">{{ starString(sellerTrust.stars) }} trust</span>
-            </div>
-            <div class="stat-pill">
-              <strong>{{ sellerWishlistCount }}</strong>
-              <span>product wishlists</span>
-            </div>
-            <div class="stat-pill">
-              <strong>{{ sellerFavoriteCount }}</strong>
-              <span>buyer favorites</span>
-            </div>
-            <div class="stat-pill">
-              <strong>&#128077; {{ sellerGoodCount }}</strong>
-              <span>good ratings</span>
-            </div>
-            <div class="stat-pill">
-              <strong>&#128078; {{ sellerBadCount }}</strong>
-              <span>bad ratings</span>
-            </div>
-            <div class="stat-pill">
-              <strong>&#128172; {{ sellerComments.length }}</strong>
-              <span>comments</span>
-            </div>
-          </div>
+
           <div class="details">
-            <p>&#128205; {{ sellerLocationLabel }}</p>
-            <p>{{ sellerLocationPrecision }}</p>
-            <p>📞 {{ seller.phone }}</p>
-            <p>✉️ {{ seller.email }}</p>
-            <p class="id-info">ID: {{ seller.idnumber }}</p>
+            <span>{{ seller.location }}</span>
+            <span>{{ seller.phone }}</span>
+            <span>{{ seller.email }}</span>
+            <span>ID: {{ seller.idnumber }}</span>
           </div>
+
           <button
             v-if="currentUser?.type === 'buyer'"
             class="btn btn-favorite"
             @click="toggleFavoriteSeller"
           >
-            {{ isFavoriteSeller ? 'Remove from Favorite Sellers' : 'Add Seller to Favorites' }}
+            {{ isFavoriteSeller ? 'Saved Seller' : 'Save Seller' }}
           </button>
         </div>
-      </div>
 
-      <div class="feedback-section">
+        <div class="profile-stats">
+          <div class="stat-pill">
+            <strong>{{ sellerWishlistCount }}</strong>
+            <span>product wishlists</span>
+          </div>
+          <div class="stat-pill">
+            <strong>{{ sellerFavoriteCount }}</strong>
+            <span>buyer favorites</span>
+          </div>
+          <div class="stat-pill good">
+            <strong>{{ sellerGoodCount }}</strong>
+            <span>good ratings</span>
+          </div>
+          <div class="stat-pill bad">
+            <strong>{{ sellerBadCount }}</strong>
+            <span>bad ratings</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="feedback-section">
         <div class="feedback-header">
           <div>
-            <h2>Seller Ratings & Comments</h2>
-            <p>See what buyers say about {{ seller.businessName }}.</p>
+            <span class="panel-label">Seller feedback</span>
+            <h2>Ratings and Comments</h2>
           </div>
           <div class="rating-summary">
-            <span>&#128077; {{ sellerGoodCount }}</span>
-            <span>&#128078; {{ sellerBadCount }}</span>
-            <span>&#128172; {{ sellerComments.length }}</span>
+            <span>Good {{ sellerGoodCount }}</span>
+            <span>Bad {{ sellerBadCount }}</span>
+            <button class="comment-toggle" @click="toggleSellerComments">
+              Comments {{ sellerComments.length }}
+            </button>
           </div>
         </div>
 
@@ -78,14 +83,14 @@
               :class="{ active: buyerSellerRating === 'good' }"
               @click="rateSeller('good')"
             >
-              &#128077; Good seller
+              Good seller
             </button>
             <button
               class="btn btn-bad"
               :class="{ active: buyerSellerRating === 'bad' }"
               @click="rateSeller('bad')"
             >
-              &#128078; Bad seller
+              Bad seller
             </button>
           </div>
 
@@ -94,59 +99,74 @@
               v-model="newComment"
               rows="3"
               maxlength="240"
-              placeholder="Write a comment about this seller..."
+              placeholder="Write a short seller comment..."
             ></textarea>
-            <button type="submit" class="btn btn-comment">&#128172; Post Comment</button>
+            <button type="submit" class="btn btn-comment">Post Comment</button>
           </form>
         </div>
 
-        <div v-if="sellerComments.length > 0" class="comments-list">
-          <div v-for="comment in sellerComments" :key="comment.id" class="comment-item">
-            <div class="comment-meta">
-              <strong>{{ comment.buyerName }}</strong>
-              <span>{{ formatDate(comment.createdAt) }}</span>
+        <div v-if="showSellerComments" class="comments-area">
+          <div v-if="sellerComments.length > 0" class="comments-list">
+            <div v-for="comment in sellerComments" :key="comment.id" class="comment-item">
+              <div class="comment-meta">
+                <strong>{{ comment.buyerName }}</strong>
+                <span>{{ formatDate(comment.createdAt) }}</span>
+              </div>
+              <p>{{ comment.text }}</p>
             </div>
-            <p>{{ comment.text }}</p>
+          </div>
+          <div v-else class="mini-empty">
+            <p>No comments yet. Buyers can be the first to share their experience.</p>
           </div>
         </div>
-        <div v-else class="mini-empty">
-          <p>No comments yet. Buyers can be the first to share their experience.</p>
-        </div>
-      </div>
+      </section>
 
-      <!-- Products Section -->
-      <div class="products-section">
-        <h2>Products from {{ seller.businessName }}</h2>
+      <section class="products-section">
+        <div class="section-title">
+          <div>
+            <span class="panel-label">Store products</span>
+            <h2>Products from {{ seller.businessName }}</h2>
+          </div>
+        </div>
         
-        <div v-if="rankedProducts.length > 0" class="products-grid">
-          <div v-for="product in rankedProducts" :key="product.id" class="product-card">
+        <div v-if="seller.products && seller.products.length > 0" class="products-grid">
+          <article v-for="product in seller.products" :key="product.id" class="product-card">
             <div class="card-image">
               <img :src="product.image" :alt="product.name" />
             </div>
             <div class="card-content">
-              <span class="category-tag">{{ product.category }}</span>
-              <h3>{{ product.name }}</h3>
-              <p v-if="product.description" class="description">{{ product.description }}</p>
-              <div class="price">${{ product.price.toFixed(2) }}</div>
-              <div class="product-signals">
-                <span>&#10084; {{ productLikeCount(product) }} likes</span>
-                <span>{{ product.wishlistCount }} wishlists</span>
+              <div class="product-heading">
+                <h3>{{ product.name }}</h3>
+                <strong>${{ product.price.toFixed(2) }}</strong>
               </div>
-              <button
-                v-if="currentUser?.type === 'buyer'"
-                class="btn btn-like-product"
-                :class="{ active: isProductLiked(product.id) }"
-                @click="toggleProductLike(product)"
-              >
-                &#10084; {{ isProductLiked(product.id) ? 'Liked' : 'Like Product' }} ({{ productLikeCount(product) }})
-              </button>
-              <button
-                v-if="currentUser?.type === 'buyer'"
-                class="btn btn-product-comment"
-                @click="openProductComment(product)"
-              >
-                &#128172; Comment on Product
-              </button>
+              <p v-if="product.description" class="description">{{ product.description }}</p>
+
+              <div class="product-signals">
+                <span>{{ productLikeCount(product) }} likes</span>
+                <button class="comment-toggle small" @click="toggleProductComments(product)">
+                  Comments {{ productCommentCount(product) }}
+                </button>
+              </div>
+
+              <div v-if="currentUser?.type === 'buyer'" class="product-actions">
+                <button
+                  class="btn btn-like-product"
+                  :class="{ active: isProductLiked(product.id) }"
+                  @click="toggleProductLike(product)"
+                >
+                  {{ isProductLiked(product.id) ? 'Liked' : 'Like' }}
+                </button>
+                <button class="btn btn-product-comment" @click="openProductComment(product)">
+                  Comment
+                </button>
+                <button class="btn btn-wishlist" @click="toggleWishlistProduct(product)">
+                  {{ isProductWishlisted(product.id) ? 'Saved' : 'Wishlist' }}
+                </button>
+                <button class="btn btn-report" @click="openProductReport(product)">
+                  Report
+                </button>
+              </div>
+
               <form
                 v-if="commentingProductId === product.id"
                 class="product-comment-form"
@@ -156,28 +176,15 @@
                   v-model="productCommentText"
                   rows="3"
                   maxlength="240"
-                  placeholder="Write a comment about this product..."
+                  placeholder="Write a product comment..."
                   required
                 ></textarea>
-                <div class="product-comment-actions">
-                  <button type="submit" class="btn btn-submit-product-comment">Post Comment</button>
-                  <button type="button" class="btn btn-cancel-product-comment" @click="cancelProductComment">Cancel</button>
+                <div class="form-actions compact">
+                  <button type="submit" class="btn btn-primary">Post</button>
+                  <button type="button" class="btn btn-secondary" @click="cancelProductComment">Cancel</button>
                 </div>
               </form>
-              <button
-                v-if="currentUser?.type === 'buyer'"
-                class="btn btn-wishlist"
-                @click="toggleWishlistProduct(product)"
-              >
-                {{ isProductWishlisted(product.id) ? 'Remove from Wishlist' : 'Add to Wishlist' }}
-              </button>
-              <button
-                v-if="currentUser?.type === 'buyer'"
-                class="btn btn-report"
-                @click="openProductReport(product)"
-              >
-                Report Product
-              </button>
+
               <form
                 v-if="reportingProductId === product.id"
                 class="report-form"
@@ -190,19 +197,13 @@
                   placeholder="Tell us the reason for this report..."
                   required
                 ></textarea>
-                <div class="report-actions">
-                  <button type="submit" class="btn btn-submit-report">Send Report</button>
-                  <button type="button" class="btn btn-cancel-report" @click="cancelProductReport">Cancel</button>
+                <div class="form-actions compact">
+                  <button type="submit" class="btn btn-primary">Send</button>
+                  <button type="button" class="btn btn-secondary" @click="cancelProductReport">Cancel</button>
                 </div>
               </form>
-              <button class="btn btn-contact" @click="contactSeller">
-                Contact Seller
-              </button>
 
-              <div class="product-comments">
-                <div class="product-comments-title">
-                  &#128172; Product comments ({{ productCommentCount(product) }})
-                </div>
+              <div v-if="isProductCommentsVisible(product)" class="product-comments">
                 <div v-if="product.comments && product.comments.length > 0" class="product-comments-list">
                   <div v-for="comment in product.comments" :key="comment.id" class="product-comment-item">
                     <div class="product-comment-meta">
@@ -214,15 +215,19 @@
                 </div>
                 <p v-else class="product-comments-empty">No product comments yet.</p>
               </div>
+
+              <button class="btn btn-contact" @click="contactSeller">
+                Contact Seller
+              </button>
             </div>
-          </div>
+          </article>
         </div>
 
         <div v-else class="empty-state">
-          <p>This seller hasn't added any products yet.</p>
+          <p>This seller has not added any products yet.</p>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
 
     <div v-else class="loading">
       <p>Loading seller information...</p>
@@ -233,24 +238,19 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import {
-  calculateSellerTrust,
-  rankedProductsForSeller,
-  resolveLocation,
-  starString
-} from '../utils/marketIntelligence.js'
+import { buyerApi, clearSession, reportsApi, sellersApi } from '../api.js'
 
 const route = useRoute()
 const router = useRouter()
 const seller = ref(null)
 const currentUser = ref(null)
 const buyer = ref(null)
-const buyers = ref([])
-const productReports = ref([])
 const reportingProductId = ref(null)
 const reportReason = ref('')
 const commentingProductId = ref(null)
 const productCommentText = ref('')
+const showSellerComments = ref(false)
+const visibleProductComments = ref({})
 
 onMounted(() => {
   currentUser.value = JSON.parse(localStorage.getItem('currentUser') || 'null')
@@ -263,36 +263,28 @@ onMounted(() => {
   loadBuyer()
 })
 
-const loadSeller = () => {
-  const sellerId = parseInt(route.params.id)
-  const sellers = JSON.parse(localStorage.getItem('sellers') || '[]')
-  productReports.value = JSON.parse(localStorage.getItem('productReports') || '[]')
-  const foundSeller = sellers.find(s => s.id === sellerId)
-  
-  if (foundSeller) {
-    seller.value = foundSeller
+const loadSeller = async () => {
+  try {
+    const data = await sellersApi.get(route.params.id)
+    seller.value = data.seller
+  } catch (error) {
+    alert(error.message)
+    router.push('/marketplace')
   }
 }
 
-const loadBuyer = () => {
-  buyers.value = JSON.parse(localStorage.getItem('buyers') || '[]')
+const loadBuyer = async () => {
   if (currentUser.value?.type !== 'buyer') return
 
-  const foundBuyer = buyers.value.find(b => b.id === currentUser.value.id)
-  if (foundBuyer) {
-    foundBuyer.favoriteSellers = foundBuyer.favoriteSellers || []
-    foundBuyer.wishlist = foundBuyer.wishlist || []
-    buyer.value = foundBuyer
-  }
-}
-
-const saveBuyer = () => {
-  if (!buyer.value) return
-
-  const buyerIndex = buyers.value.findIndex(b => b.id === buyer.value.id)
-  if (buyerIndex !== -1) {
-    buyers.value[buyerIndex] = buyer.value
-    localStorage.setItem('buyers', JSON.stringify(buyers.value))
+  try {
+    const data = await buyerApi.me()
+    buyer.value = {
+      ...data.buyer,
+      favoriteSellers: data.buyer.favoriteSellers || [],
+      wishlist: data.buyer.wishlist || []
+    }
+  } catch (error) {
+    alert(error.message)
   }
 }
 
@@ -303,14 +295,12 @@ const isFavoriteSeller = computed(() => {
 
 const sellerFavoriteCount = computed(() => {
   if (!seller.value) return 0
-  return buyers.value.filter(b => (b.favoriteSellers || []).includes(seller.value.id)).length
+  return seller.value.favoriteCount || 0
 })
 
 const sellerWishlistCount = computed(() => {
   if (!seller.value) return 0
-  return buyers.value.reduce((total, b) => {
-    return total + (b.wishlist || []).filter(item => item.sellerId === seller.value.id).length
-  }, 0)
+  return seller.value.wishlistCount || 0
 })
 
 const sellerReactions = computed(() => {
@@ -323,30 +313,6 @@ const sellerReactions = computed(() => {
 const sellerGoodCount = computed(() => sellerReactions.value.good.length)
 const sellerBadCount = computed(() => sellerReactions.value.bad.length)
 const sellerComments = computed(() => seller.value?.comments || [])
-
-const sellerTrust = computed(() => {
-  if (!seller.value) return { percent: '0%', stars: 0, grade: 'No data' }
-  return calculateSellerTrust(seller.value, buyers.value, productReports.value)
-})
-
-const rankedProducts = computed(() => {
-  if (!seller.value) return []
-  return rankedProductsForSeller(seller.value, buyers.value)
-})
-
-const sellerResolvedLocation = computed(() => {
-  if (!seller.value) return null
-  return resolveLocation(seller.value.locationMeta || seller.value)
-})
-
-const sellerLocationLabel = computed(() => {
-  return sellerResolvedLocation.value?.summary || seller.value?.location || ''
-})
-
-const sellerLocationPrecision = computed(() => {
-  const precision = sellerResolvedLocation.value?.precision || 'estimate'
-  return `Location precision: ${precision.replace(/-/g, ' ')}`
-})
 
 const buyerSellerRating = computed(() => {
   if (!buyer.value) return ''
@@ -361,67 +327,49 @@ const dashboardPath = computed(() => {
   return '/buyer-dashboard'
 })
 
-const saveSeller = () => {
-  if (!seller.value) return
+const toggleFavoriteSeller = async () => {
+  if (!buyer.value || !seller.value) return
 
-  const sellers = JSON.parse(localStorage.getItem('sellers') || '[]')
-  const sellerIndex = sellers.findIndex(s => s.id === seller.value.id)
-  if (sellerIndex !== -1) {
-    sellers[sellerIndex] = seller.value
-    localStorage.setItem('sellers', JSON.stringify(sellers))
+  try {
+    const data = await sellersApi.favorite(seller.value.id)
+    buyer.value = {
+      ...data.buyer,
+      favoriteSellers: data.buyer.favoriteSellers || [],
+      wishlist: data.buyer.wishlist || []
+    }
+    await loadSeller()
+  } catch (error) {
+    alert(error.message)
   }
 }
 
-const toggleFavoriteSeller = () => {
+const rateSeller = async (rating) => {
   if (!buyer.value || !seller.value) return
 
-  buyer.value.favoriteSellers = buyer.value.favoriteSellers || []
-  if (isFavoriteSeller.value) {
-    buyer.value.favoriteSellers = buyer.value.favoriteSellers.filter(id => id !== seller.value.id)
-  } else {
-    buyer.value.favoriteSellers.push(seller.value.id)
+  try {
+    const data = await sellersApi.rate(seller.value.id, rating)
+    seller.value = data.seller
+  } catch (error) {
+    alert(error.message)
   }
-  saveBuyer()
-}
-
-const rateSeller = (rating) => {
-  if (!buyer.value || !seller.value) return
-
-  seller.value.reactions = seller.value.reactions || { good: [], bad: [] }
-  seller.value.reactions.good = seller.value.reactions.good || []
-  seller.value.reactions.bad = seller.value.reactions.bad || []
-
-  const opposite = rating === 'good' ? 'bad' : 'good'
-  seller.value.reactions[opposite] = seller.value.reactions[opposite].filter(id => id !== buyer.value.id)
-
-  if (seller.value.reactions[rating].includes(buyer.value.id)) {
-    seller.value.reactions[rating] = seller.value.reactions[rating].filter(id => id !== buyer.value.id)
-  } else {
-    seller.value.reactions[rating].push(buyer.value.id)
-  }
-
-  saveSeller()
 }
 
 const newComment = ref('')
 
-const addSellerComment = () => {
+const addSellerComment = async () => {
   if (!buyer.value || !seller.value) return
 
   const text = newComment.value.trim()
   if (!text) return
 
-  seller.value.comments = seller.value.comments || []
-  seller.value.comments.unshift({
-    id: Date.now(),
-    buyerId: buyer.value.id,
-    buyerName: buyer.value.name,
-    text,
-    createdAt: new Date().toISOString()
-  })
-
-  newComment.value = ''
-  saveSeller()
+  try {
+    const data = await sellersApi.comment(seller.value.id, text)
+    seller.value = data.seller
+    newComment.value = ''
+    showSellerComments.value = true
+  } catch (error) {
+    alert(error.message)
+  }
 }
 
 const isProductWishlisted = (productId) => {
@@ -443,20 +391,15 @@ const productCommentCount = (product) => {
   return (product.comments || []).length
 }
 
-const toggleProductLike = (product) => {
+const toggleProductLike = async (product) => {
   if (!buyer.value || !seller.value) return
 
-  const foundProduct = seller.value.products?.find(p => p.id === product.id)
-  if (!foundProduct) return
-
-  foundProduct.likes = foundProduct.likes || []
-  if (foundProduct.likes.includes(buyer.value.id)) {
-    foundProduct.likes = foundProduct.likes.filter(id => id !== buyer.value.id)
-  } else {
-    foundProduct.likes.push(buyer.value.id)
+  try {
+    const data = await sellersApi.likeProduct(seller.value.id, product.id)
+    seller.value = data.seller
+  } catch (error) {
+    alert(error.message)
   }
-
-  saveSeller()
 }
 
 const openProductComment = (product) => {
@@ -469,46 +412,54 @@ const cancelProductComment = () => {
   productCommentText.value = ''
 }
 
-const addProductComment = (product) => {
+const toggleSellerComments = () => {
+  showSellerComments.value = !showSellerComments.value
+}
+
+const toggleProductComments = (product) => {
+  visibleProductComments.value = {
+    ...visibleProductComments.value,
+    [product.id]: !visibleProductComments.value[product.id]
+  }
+}
+
+const isProductCommentsVisible = (product) => {
+  return Boolean(visibleProductComments.value[product.id])
+}
+
+const addProductComment = async (product) => {
   if (!buyer.value || !seller.value) return
 
   const text = productCommentText.value.trim()
   if (!text) return
 
-  const foundProduct = seller.value.products?.find(p => p.id === product.id)
-  if (!foundProduct) return
-
-  foundProduct.comments = foundProduct.comments || []
-  foundProduct.comments.unshift({
-    id: Date.now(),
-    buyerId: buyer.value.id,
-    buyerName: buyer.value.name,
-    text,
-    createdAt: new Date().toISOString()
-  })
-
-  cancelProductComment()
-  saveSeller()
+  try {
+    const data = await sellersApi.commentProduct(seller.value.id, product.id, text)
+    seller.value = data.seller
+    visibleProductComments.value = {
+      ...visibleProductComments.value,
+      [product.id]: true
+    }
+    cancelProductComment()
+  } catch (error) {
+    alert(error.message)
+  }
 }
 
-const toggleWishlistProduct = (product) => {
+const toggleWishlistProduct = async (product) => {
   if (!buyer.value || !seller.value) return
 
-  buyer.value.wishlist = buyer.value.wishlist || []
-  if (isProductWishlisted(product.id)) {
-    buyer.value.wishlist = buyer.value.wishlist.filter(item => !(item.productId === product.id && item.sellerId === seller.value.id))
-  } else {
-    buyer.value.wishlist.push({
-      productId: product.id,
-      sellerId: seller.value.id,
-      productName: product.name,
-      productPrice: product.price,
-      productImage: product.image,
-      sellerName: seller.value.businessName,
-      addedAt: new Date().toISOString()
-    })
+  try {
+    const data = await sellersApi.wishlistProduct(seller.value.id, product.id)
+    buyer.value = {
+      ...data.buyer,
+      favoriteSellers: data.buyer.favoriteSellers || [],
+      wishlist: data.buyer.wishlist || []
+    }
+    await loadSeller()
+  } catch (error) {
+    alert(error.message)
   }
-  saveBuyer()
 }
 
 const openProductReport = (product) => {
@@ -521,29 +472,23 @@ const cancelProductReport = () => {
   reportReason.value = ''
 }
 
-const submitProductReport = (product) => {
+const submitProductReport = async (product) => {
   if (!buyer.value || !seller.value) return
 
   const reason = reportReason.value.trim()
   if (!reason) return
 
-  const productReports = JSON.parse(localStorage.getItem('productReports') || '[]')
-  productReports.unshift({
-    id: Date.now(),
-    sellerId: seller.value.id,
-    sellerName: seller.value.businessName,
-    productId: product.id,
-    productName: product.name,
-    reporterId: buyer.value.id,
-    reporterName: buyer.value.name,
-    reporterEmail: buyer.value.email,
-    reason,
-    createdAt: new Date().toISOString()
-  })
-
-  localStorage.setItem('productReports', JSON.stringify(productReports))
-  cancelProductReport()
-  alert('Product report sent. Thank you for helping keep the market safe.')
+  try {
+    await reportsApi.reportProduct({
+      sellerId: seller.value.id,
+      productId: product.id,
+      reason
+    })
+    cancelProductReport()
+    alert('Product report sent. Thank you for helping keep the market safe.')
+  } catch (error) {
+    alert(error.message)
+  }
 }
 
 const contactSeller = () => {
@@ -558,120 +503,158 @@ const formatDate = (dateValue) => {
 }
 
 const logout = () => {
-  localStorage.removeItem('currentUser')
+  clearSession()
   router.push('/')
 }
 </script>
 
 <style scoped>
-.seller-profile-container {
+.seller-profile-page {
+  background: var(--page);
   min-height: 100vh;
-  background: #f8f9fa;
 }
 
-.navbar {
-  background: #fff;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  padding: 1rem 2rem;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.nav-content {
-  max-width: 1200px;
-  margin: 0 auto;
+.profile-nav {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid var(--line);
   display: flex;
   justify-content: space-between;
+  padding: 0.85rem clamp(1rem, 4vw, 2rem);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.brand {
   align-items: center;
-  gap: 1rem;
-}
-
-.logo {
-  font-size: 1.5rem;
-  color: #2c3e50;
+  color: var(--ink);
+  display: inline-flex;
+  gap: 0.7rem;
   text-decoration: none;
-  font-weight: 600;
 }
 
-.back-link {
-  color: #e74c3c;
-  text-decoration: none;
-  font-weight: 600;
-  transition: color 0.3s;
-}
-
-.back-link:hover {
-  color: #c0392b;
+.brand span {
+  align-items: center;
+  background: var(--ink);
+  border-radius: 8px;
+  color: #ffffff;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 850;
+  height: 2.25rem;
+  justify-content: center;
+  width: 2.25rem;
 }
 
 .nav-button {
-  width: auto;
-  padding: 0.5rem 1rem;
-}
-
-.btn-secondary {
-  background: #95a5a6;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: #7f8c8d;
+  min-height: 2.1rem;
+  padding-inline: 0.8rem;
 }
 
 .profile-content {
-  max-width: 1200px;
+  display: grid;
+  gap: 1.25rem;
   margin: 0 auto;
-  padding: 2rem;
+  max-width: 1240px;
+  padding: clamp(1rem, 3vw, 2rem);
 }
 
-.seller-header {
-  background: white;
+.seller-hero,
+.feedback-section,
+.products-section {
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 2rem;
-  display: flex;
-  gap: 3rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-sm);
+}
+
+.seller-hero {
+  align-items: center;
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 180px minmax(0, 1fr) 320px;
+  padding: 1.25rem;
+}
+
+.seller-photo,
+.seller-photo-placeholder {
+  border-radius: 8px;
+  height: 180px;
+  width: 180px;
 }
 
 .seller-photo {
-  width: 250px;
-  height: 250px;
-  border-radius: 8px;
   object-fit: cover;
-  border: 4px solid #e74c3c;
 }
 
-.seller-info {
-  flex: 1;
+.seller-photo-placeholder {
+  align-items: center;
+  background: #e2e8f0;
+  color: var(--muted);
+  display: flex;
+  font-size: 3rem;
+  font-weight: 850;
+  justify-content: center;
 }
 
 .seller-info h1 {
-  color: #2c3e50;
-  margin: 0 0 0.5rem 0;
-  font-size: 2rem;
+  font-size: 2.4rem;
+  line-height: 1.1;
+  margin-top: 0.35rem;
 }
 
 .owner-name {
-  color: #666;
-  margin: 0 0 1.5rem 0;
-  font-size: 1.1rem;
+  margin-top: 0.35rem;
+}
+
+.details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 1rem;
+}
+
+.details span {
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 750;
+  padding: 0.35rem 0.65rem;
+}
+
+.btn-favorite {
+  background: #fff7ed;
+  color: var(--accent);
+  margin-top: 1rem;
+}
+
+.btn-favorite:hover {
+  background: #ffedd5;
 }
 
 .profile-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .stat-pill {
-  background: #f8f9fa;
-  border-left: 4px solid #e74c3c;
-  border-radius: 6px;
-  padding: 0.75rem 1rem;
-  min-width: 150px;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  padding: 0.85rem;
+}
+
+.stat-pill.good {
+  border-left-color: var(--success);
+}
+
+.stat-pill.bad {
+  border-left-color: var(--danger);
 }
 
 .stat-pill strong,
@@ -680,368 +663,161 @@ const logout = () => {
 }
 
 .stat-pill strong {
-  color: #2c3e50;
-  font-size: 1.4rem;
+  color: var(--ink);
+  font-size: 1.5rem;
+  line-height: 1;
 }
 
 .stat-pill span {
-  color: #666;
-  font-size: 0.9rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 750;
+  margin-top: 0.35rem;
 }
 
-.trust-pill {
-  background: #fffdf2;
-  border-left-color: #d6a400;
-}
-
-.trust-stars {
-  color: #d6a400 !important;
-  font-weight: 800;
-}
-
-.details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.details p {
-  color: #555;
-  font-size: 1.05rem;
-  margin: 0;
-}
-
-.id-info {
-  color: #999;
-  font-size: 0.95rem;
-  margin-top: 1rem !important;
-}
-
+.feedback-section,
 .products-section {
-  background: white;
-  border-radius: 8px;
-  padding: 2rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 1.2rem;
 }
 
-.feedback-section {
-  background: white;
-  border-radius: 8px;
-  padding: 2rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  margin-bottom: 2rem;
-}
-
-.feedback-header {
+.feedback-header,
+.section-title {
+  align-items: center;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
-.feedback-header h2 {
-  color: #2c3e50;
-  margin: 0 0 0.4rem;
+.panel-label {
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 850;
+  text-transform: uppercase;
 }
 
-.feedback-header p {
-  color: #666;
+.feedback-header h2,
+.section-title h2 {
+  font-size: 1.35rem;
+  margin-top: 0.25rem;
 }
 
 .rating-summary {
+  align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.45rem;
 }
 
-.rating-summary span {
-  background: #f8f9fa;
+.rating-summary span,
+.comment-toggle {
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
   border-radius: 6px;
-  color: #2c3e50;
-  font-weight: 700;
-  padding: 0.5rem 0.75rem;
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 0.4rem 0.65rem;
+}
+
+.comment-toggle {
+  cursor: pointer;
+}
+
+.comment-toggle:hover {
+  border-color: rgba(194, 65, 12, 0.4);
+  color: var(--accent);
+}
+
+.comment-toggle.small {
+  background: #eff6ff;
+  color: var(--info);
+  padding: 0.3rem 0.55rem;
 }
 
 .buyer-feedback-tools {
-  border: 1px solid #e0e0e0;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
   border-radius: 8px;
+  display: grid;
+  gap: 0.9rem;
   padding: 1rem;
-  margin-bottom: 1.5rem;
 }
 
-.rating-actions {
+.rating-actions,
+.product-actions,
+.form-actions {
   display: flex;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.55rem;
 }
 
 .comment-form {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.65rem;
 }
 
-.comment-form textarea {
-  border: 2px solid #e0e0e0;
+.comment-form textarea,
+.product-comment-form textarea,
+.report-form textarea {
+  border: 1px solid var(--line-strong);
   border-radius: 6px;
-  box-sizing: border-box;
-  font: inherit;
-  padding: 0.75rem;
-  resize: vertical;
-  width: 100%;
-}
-
-.comment-form textarea:focus {
-  border-color: #e74c3c;
-  outline: none;
-}
-
-.comments-list {
-  display: grid;
-  gap: 1rem;
-}
-
-.comment-item {
-  background: #f8f9fa;
-  border-left: 4px solid #e74c3c;
-  border-radius: 6px;
-  padding: 1rem;
-}
-
-.comment-meta {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.5rem;
-}
-
-.comment-meta strong {
-  color: #2c3e50;
-}
-
-.comment-meta span {
-  color: #777;
-  font-size: 0.9rem;
-}
-
-.comment-item p {
-  color: #555;
-  line-height: 1.5;
-}
-
-.mini-empty {
-  background: #f8f9fa;
-  border-radius: 8px;
-  color: #777;
-  padding: 1rem;
-  text-align: center;
-}
-
-.products-section h2 {
-  color: #2c3e50;
-  margin-top: 0;
-  margin-bottom: 2rem;
-}
-
-.products-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 2rem;
-}
-
-.product-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.product-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-}
-
-.card-image {
-  width: 100%;
-  height: 220px;
-  overflow: hidden;
-  background: #f0f0f0;
-}
-
-.card-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.card-content {
-  padding: 1.5rem;
-}
-
-.card-content h3 {
-  color: #2c3e50;
-  margin: 0 0 0.5rem 0;
-  font-size: 1.1rem;
-}
-
-.category-tag {
-  background: #edf6fd;
-  border: 1px solid #aed6f1;
-  border-radius: 999px;
-  color: #2471a3;
-  display: inline-flex;
-  font-size: 0.78rem;
-  font-weight: 700;
-  margin-bottom: 0.6rem;
-  padding: 0.25rem 0.55rem;
-}
-
-.description {
-  color: #666;
-  font-size: 0.95rem;
-  margin: 0.5rem 0;
-  line-height: 1.4;
-}
-
-.price {
-  color: #e74c3c;
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin: 1rem 0;
-}
-
-.product-signals {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.product-signals span {
-  background: #f8f9fa;
-  border: 1px solid #e0e0e0;
-  border-radius: 999px;
-  color: #2c3e50;
-  font-size: 0.82rem;
-  font-weight: 700;
-  padding: 0.3rem 0.55rem;
-}
-
-.btn {
-  width: 100%;
-  padding: 0.75rem;
-  border: none;
-  border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.btn-contact {
-  background: #e74c3c;
-  color: white;
-}
-
-.btn-contact:hover {
-  background: #c0392b;
-}
-
-.btn-favorite {
-  background: #f39c12;
-  color: white;
-  margin-top: 1.5rem;
-  max-width: 280px;
-}
-
-.btn-favorite:hover {
-  background: #d68910;
-}
-
-.btn-wishlist {
-  background: #3498db;
-  color: white;
-  margin-bottom: 0.75rem;
-}
-
-.btn-wishlist:hover {
-  background: #2980b9;
-}
-
-.btn-product-comment {
-  background: #f8f9fa;
-  border: 1px solid #3498db;
-  color: #2471a3;
-  margin-bottom: 0.75rem;
-}
-
-.btn-product-comment:hover {
-  background: #edf6fd;
-}
-
-.product-comment-form {
-  background: #f4f9fd;
-  border: 1px solid #aed6f1;
-  border-radius: 8px;
-  display: grid;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-  padding: 0.85rem;
-}
-
-.product-comment-form textarea {
-  border: 1px solid #85c1e9;
-  border-radius: 6px;
-  box-sizing: border-box;
-  font: inherit;
+  color: var(--ink);
   padding: 0.7rem;
   resize: vertical;
   width: 100%;
 }
 
-.product-comment-form textarea:focus {
-  border-color: #3498db;
+.comment-form textarea:focus,
+.product-comment-form textarea:focus,
+.report-form textarea:focus {
+  border-color: var(--accent);
   outline: none;
 }
 
-.product-comment-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
+.btn-good {
+  background: #ecfdf3;
+  color: var(--success);
 }
 
-.btn-submit-product-comment {
-  background: #3498db;
-  color: white;
+.btn-good.active,
+.btn-good:hover {
+  background: #d1fadf;
 }
 
-.btn-cancel-product-comment {
-  background: #bdc3c7;
-  color: #2c3e50;
+.btn-bad {
+  background: #fff1f2;
+  color: var(--danger);
 }
 
-.product-comments {
-  border-top: 1px solid #eee;
+.btn-bad.active,
+.btn-bad:hover {
+  background: #ffe4e6;
+}
+
+.btn-comment {
+  justify-self: end;
+}
+
+.comments-area {
   margin-top: 1rem;
-  padding-top: 1rem;
 }
 
-.product-comments-title {
-  color: #2c3e50;
-  font-weight: 700;
-  margin-bottom: 0.75rem;
-}
-
+.comments-list,
 .product-comments-list {
   display: grid;
   gap: 0.75rem;
 }
 
+.comment-item,
 .product-comment-item {
-  background: #f8f9fa;
-  border-radius: 6px;
-  padding: 0.75rem;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.8rem;
 }
 
+.comment-meta,
 .product-comment-meta {
   display: flex;
   justify-content: space-between;
@@ -1049,153 +825,204 @@ const logout = () => {
   margin-bottom: 0.35rem;
 }
 
+.comment-meta strong,
 .product-comment-meta strong {
-  color: #2c3e50;
-  font-size: 0.95rem;
+  color: var(--ink);
 }
 
+.comment-meta span,
 .product-comment-meta span {
-  color: #777;
-  font-size: 0.85rem;
+  color: var(--muted);
+  font-size: 0.82rem;
 }
 
+.comment-item p,
 .product-comment-item p,
 .product-comments-empty {
-  color: #666;
+  color: var(--muted);
   font-size: 0.9rem;
-  line-height: 1.4;
-  margin: 0;
 }
 
-.btn-report {
-  background: #f8f9fa;
-  border: 1px solid #f39c12;
-  color: #b9770e;
-  margin-bottom: 0.75rem;
-}
-
-.btn-report:hover {
-  background: #fff4df;
-}
-
-.report-form {
-  background: #fff8ed;
-  border: 1px solid #f6c36b;
-  border-radius: 8px;
+.products-grid {
   display: grid;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-  padding: 0.85rem;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 }
 
-.report-form textarea {
-  border: 1px solid #e0b15c;
-  border-radius: 6px;
-  box-sizing: border-box;
-  font: inherit;
-  padding: 0.7rem;
-  resize: vertical;
+.product-card {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.product-card:hover {
+  border-color: rgba(194, 65, 12, 0.36);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.card-image {
+  background: #e2e8f0;
+  height: 185px;
+  overflow: hidden;
+}
+
+.card-image img {
+  height: 100%;
+  object-fit: cover;
   width: 100%;
 }
 
-.report-form textarea:focus {
-  border-color: #e74c3c;
-  outline: none;
-}
-
-.report-actions {
+.card-content {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  padding: 0.95rem;
 }
 
-.btn-submit-report {
-  background: #e74c3c;
-  color: white;
+.product-heading {
+  align-items: start;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
 }
 
-.btn-cancel-report {
-  background: #bdc3c7;
-  color: #2c3e50;
+.product-heading h3 {
+  font-size: 1.05rem;
 }
 
-.btn-good {
-  background: #27ae60;
-  color: white;
+.product-heading strong {
+  color: var(--accent);
+  white-space: nowrap;
 }
 
-.btn-good.active,
-.btn-good:hover {
-  background: #1e8449;
+.description {
+  display: -webkit-box;
+  font-size: 0.9rem;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
-.btn-bad {
-  background: #7f8c8d;
-  color: white;
+.product-signals {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
 }
 
-.btn-bad.active,
-.btn-bad:hover {
-  background: #5f6a6a;
+.product-signals span {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 800;
 }
 
-.btn-comment {
-  background: #e74c3c;
-  color: white;
-  justify-self: end;
-  width: auto;
+.product-actions .btn {
+  min-height: 2rem;
+  padding: 0.4rem 0.62rem;
 }
 
 .btn-like-product {
-  background: #f8f9fa;
-  border: 1px solid #e0e0e0;
-  color: #e74c3c;
-  margin-bottom: 0.75rem;
+  background: #fff1f2;
+  color: var(--danger);
 }
 
 .btn-like-product.active,
 .btn-like-product:hover {
-  background: #fdecea;
-  border-color: #e74c3c;
+  background: #ffe4e6;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 3rem;
-  color: #666;
+.btn-product-comment {
+  background: #eff6ff;
+  color: var(--info);
+}
+
+.btn-wishlist {
+  background: #fff7ed;
+  color: var(--accent);
+}
+
+.btn-report {
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.product-comment-form,
+.report-form,
+.product-comments {
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.8rem;
+}
+
+.form-actions.compact .btn {
+  min-height: 2rem;
+  padding: 0.4rem 0.75rem;
+}
+
+.btn-contact {
+  background: var(--ink);
+  color: #ffffff;
+  width: 100%;
+}
+
+.btn-contact:hover {
+  background: #263244;
 }
 
 .loading {
+  padding: 4rem 1rem;
   text-align: center;
-  padding: 4rem;
-  color: #666;
 }
 
-@media (max-width: 768px) {
-  .seller-header {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+@media (max-width: 980px) {
+  .seller-hero {
+    grid-template-columns: 150px 1fr;
   }
 
+  .profile-stats {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .seller-info h1 {
+    font-size: 1.8rem;
+  }
+
+  .profile-nav,
   .feedback-header,
-  .rating-actions,
-  .comment-meta,
-  .product-comment-meta {
+  .section-title {
+    align-items: flex-start;
     flex-direction: column;
   }
 
-  .seller-photo {
-    width: 200px;
-    height: 200px;
+  .nav-links {
+    flex-wrap: wrap;
   }
 
-  .products-grid {
+  .seller-hero,
+  .profile-stats {
     grid-template-columns: 1fr;
   }
 
-  .seller-info h1 {
-    font-size: 1.5rem;
+  .seller-photo,
+  .seller-photo-placeholder {
+    height: 140px;
+    width: 140px;
+  }
+
+  .product-heading,
+  .product-signals,
+  .comment-meta,
+  .product-comment-meta {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 </style>

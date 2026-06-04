@@ -64,7 +64,7 @@
             <button @click="switchType" class="btn-switch">Switch to {{ loginType === 'buyer' ? 'Seller' : 'Buyer' }}</button>
           </p>
           <p class="clear-action">
-            <button type="button" class="btn btn-secondary" @click="clearAccounts">Clear all buyers and sellers</button>
+            <button type="button" class="btn btn-secondary" @click="clearLocalSession">Clear local session</button>
           </p>
         </div>
       </div>
@@ -75,34 +75,25 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { authApi, clearSession, saveSession } from '../api.js'
 
 const router = useRouter()
 const loginType = ref('buyer')
 const form = ref({ email: '', password: '' })
 const error = ref('')
 
-const login = () => {
+const login = async () => {
   error.value = ''
-  const typeKey = loginType.value === 'seller' ? 'sellers' : 'buyers'
-  const accounts = JSON.parse(localStorage.getItem(typeKey) || '[]')
-  const account = accounts.find((item) => item.email === form.value.email && item.password === form.value.password)
-
-  if (!account) {
-    error.value = `No ${loginType.value} account found with that email and password.`
-    return
-  }
-
-  const displayName = loginType.value === 'seller' ? account.businessName : account.name
-  localStorage.setItem('currentUser', JSON.stringify({
-    id: account.id,
-    name: displayName,
-    type: loginType.value
-  }))
-
-  if (loginType.value === 'seller') {
-    router.push('/seller-dashboard')
-  } else {
-    router.push('/buyer-dashboard')
+  try {
+    const session = await authApi.login({
+      type: loginType.value,
+      email: form.value.email,
+      password: form.value.password
+    })
+    saveSession(session)
+    router.push(loginType.value === 'seller' ? '/seller-dashboard' : '/buyer-dashboard')
+  } catch (loginError) {
+    error.value = loginError.message
   }
 }
 
@@ -110,12 +101,10 @@ const switchType = () => {
   loginType.value = loginType.value === 'buyer' ? 'seller' : 'buyer'
 }
 
-const clearAccounts = () => {
-  localStorage.removeItem('buyers')
-  localStorage.removeItem('sellers')
-  localStorage.removeItem('currentUser')
+const clearLocalSession = () => {
+  clearSession()
   error.value = ''
-  alert('All registered buyer and seller accounts have been cleared.')
+  alert('Local session cleared.')
 }
 </script>
 
