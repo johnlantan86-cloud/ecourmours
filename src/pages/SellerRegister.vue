@@ -4,6 +4,7 @@
       <div class="nav-content">
         <router-link to="/" class="logo">🏪 Kigali Great Market</router-link>
         <div class="nav-links">
+          <router-link to="/" class="nav-link">Home</router-link>
           <router-link to="/login" class="nav-link">Login</router-link>
           <router-link to="/register" class="nav-link">Register</router-link>
         </div>
@@ -98,12 +99,11 @@
           </div>
 
           <div class="form-group">
-            <label for="password">Password</label>
-            <input
+            <PasswordField
               v-model="form.password"
-              type="password"
               id="password"
-              minlength="6"
+              label="Password"
+              :minlength="6"
               autocomplete="new-password"
               required
             />
@@ -125,6 +125,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { authApi, saveSession } from '../api.js'
+import PasswordField from '../components/PasswordField.vue'
 
 const router = useRouter()
 
@@ -193,6 +194,9 @@ const registerSeller = async () => {
 .nav-content {
   max-width: 1200px;
   margin: 0 auto;
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
 }
 
 .logo {

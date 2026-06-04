@@ -2,34 +2,38 @@
   <div class="admin-login-container">
     <div class="navbar">
       <div class="nav-content">
-        <router-link to="/" class="logo">🏪 Kigali Great Market</router-link>
+        <router-link to="/" class="logo">Kigali Great Market</router-link>
+        <div class="nav-links">
+          <router-link to="/" class="nav-link">Home</router-link>
+        </div>
       </div>
     </div>
 
     <div class="login-wrapper">
       <div class="login-card">
-        <h1>🛡️ Admin Login</h1>
+        <h1>Admin Login</h1>
         <p class="subtitle">Exclusive admin access only</p>
 
         <form @submit.prevent="loginAdmin">
           <div class="form-group">
             <label for="email">Admin Email</label>
-            <input 
-              v-model="form.email" 
-              type="email" 
-              id="email" 
+            <input
+              v-model="form.email"
+              type="email"
+              id="email"
               placeholder="Enter admin email"
+              autocomplete="email"
               required
             />
           </div>
 
           <div class="form-group">
-            <label for="password">Admin Password</label>
-            <input 
-              v-model="form.password" 
-              type="password" 
-              id="password" 
+            <PasswordField
+              v-model="form.password"
+              id="password"
+              label="Admin Password"
               placeholder="Enter admin password"
+              autocomplete="current-password"
               required
             />
           </div>
@@ -40,7 +44,7 @@
         </form>
 
         <p class="back-link">
-          <router-link to="/">← Back to Home</router-link>
+          <router-link to="/">Back to Home</router-link>
         </p>
       </div>
     </div>
@@ -51,6 +55,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { authApi, saveSession } from '../api.js'
+import PasswordField from '../components/PasswordField.vue'
 
 const router = useRouter()
 const form = ref({ email: '', password: '' })
@@ -86,22 +91,25 @@ const loginAdmin = async () => {
 }
 
 .nav-content {
-  max-width: 1200px;
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
   margin: 0 auto;
+  max-width: 1200px;
 }
 
 .logo {
-  font-size: 1.5rem;
   color: #2c3e50;
-  text-decoration: none;
-  font-weight: 600;
   display: inline-block;
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-decoration: none;
 }
 
 .login-wrapper {
+  align-items: center;
   display: flex;
   justify-content: center;
-  align-items: center;
   min-height: calc(100vh - 70px);
   padding: 2rem;
 }
@@ -110,23 +118,23 @@ const loginAdmin = async () => {
   background: white;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  max-width: 400px;
   padding: 3rem;
   width: 100%;
-  max-width: 400px;
 }
 
 .login-card h1 {
-  margin: 0 0 0.5rem;
   color: #2c3e50;
-  text-align: center;
   font-size: 2rem;
+  margin: 0 0 0.5rem;
+  text-align: center;
 }
 
 .subtitle {
-  text-align: center;
   color: #7f8c8d;
-  margin-bottom: 2rem;
   font-size: 0.9rem;
+  margin-bottom: 2rem;
+  text-align: center;
 }
 
 .form-group {
@@ -134,44 +142,44 @@ const loginAdmin = async () => {
 }
 
 .form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
   color: #2c3e50;
-  font-weight: 500;
+  display: block;
   font-size: 0.95rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
 }
 
 .form-group input {
-  width: 100%;
-  padding: 0.75rem;
   border: 2px solid #e0e0e0;
   border-radius: 6px;
   font-size: 1rem;
+  padding: 0.75rem;
   transition: border-color 0.3s;
+  width: 100%;
 }
 
 .form-group input:focus {
-  outline: none;
   border-color: #667eea;
+  outline: none;
 }
 
 .error-message {
   background: #fee;
-  color: #c33;
-  padding: 0.75rem;
   border-radius: 6px;
-  margin-bottom: 1rem;
+  color: #c33;
   font-size: 0.9rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
   text-align: center;
 }
 
 .btn {
-  padding: 0.75rem 1.5rem;
   border: none;
   border-radius: 6px;
-  font-size: 1rem;
   cursor: pointer;
+  font-size: 1rem;
   font-weight: 600;
+  padding: 0.75rem 1.5rem;
   transition: all 0.3s;
 }
 
@@ -181,8 +189,8 @@ const loginAdmin = async () => {
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+  transform: translateY(-2px);
 }
 
 .btn-full {
@@ -190,14 +198,14 @@ const loginAdmin = async () => {
 }
 
 .back-link {
-  text-align: center;
   margin-top: 1.5rem;
+  text-align: center;
 }
 
 .back-link a {
   color: #667eea;
-  text-decoration: none;
   font-size: 0.9rem;
+  text-decoration: none;
 }
 
 .back-link a:hover {

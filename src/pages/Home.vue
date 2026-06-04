@@ -7,6 +7,7 @@
       </router-link>
 
       <div class="nav-links">
+        <router-link to="/" class="nav-link">Home</router-link>
         <a href="#about" class="nav-link">About</a>
         <a href="#categories" class="nav-link">Categories</a>
         <a href="#trust" class="nav-link">Trust</a>

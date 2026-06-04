@@ -5,6 +5,7 @@
         <span>KGM</span>
         <strong>Kigali Great Market</strong>
       </router-link>
+      <div class="sidebar-role">Seller workspace</div>
 
       <div class="seller-card">
         <img v-if="seller && seller.idphoto" :src="seller.idphoto" alt="Seller profile" class="id-photo" />
@@ -16,9 +17,32 @@
       </div>
 
       <nav class="side-nav">
-        <button class="side-link" @click="scrollToSection('products')">Products</button>
-        <button class="side-link" @click="scrollToSection('insights')">Buyer Interest</button>
+        <router-link to="/" class="side-link">Home</router-link>
+        <button
+          type="button"
+          class="side-link"
+          :class="{ active: activeView === 'overview' }"
+          @click="setActiveView('overview')"
+        >
+          Overview
+        </button>
         <router-link to="/marketplace" class="side-link">All Sellers</router-link>
+        <button
+          type="button"
+          class="side-link"
+          :class="{ active: activeView === 'products' }"
+          @click="setActiveView('products')"
+        >
+          Products
+        </button>
+        <button
+          type="button"
+          class="side-link"
+          :class="{ active: activeView === 'insights' }"
+          @click="setActiveView('insights')"
+        >
+          Buyer Interest
+        </button>
       </nav>
 
       <div class="sidebar-stats">
@@ -38,13 +62,41 @@
     <main class="dashboard-main">
       <header class="dashboard-topbar">
         <div>
-          <span class="section-kicker">Seller dashboard</span>
-          <h2>Manage {{ sellerName || 'your store' }}</h2>
+          <span class="section-kicker">{{ activeViewMeta.kicker }}</span>
+          <h2>{{ activeViewMeta.title }}</h2>
+          <p>{{ activeViewMeta.description }}</p>
         </div>
         <button @click="showAddForm = true" class="btn btn-primary">Add Product</button>
       </header>
 
-      <section id="insights" class="insights-section">
+      <section v-if="activeView === 'overview'" class="dashboard-panel panel-stack">
+        <div class="overview-grid">
+          <div class="overview-card">
+            <span class="panel-label">Store profile</span>
+            <h3>{{ sellerName || 'Your store' }}</h3>
+            <p>{{ seller?.location || 'Set your store location so buyers can understand where you operate.' }}</p>
+          </div>
+          <div class="overview-card">
+            <span class="panel-label">Inventory</span>
+            <strong>{{ productCount }}</strong>
+            <p>{{ productCount === 1 ? 'product listed' : 'products listed' }}</p>
+          </div>
+          <div class="overview-card">
+            <span class="panel-label">Buyer signals</span>
+            <strong>{{ favoriteBuyers.length + wishlistedProducts.length }}</strong>
+            <p>favorites and wishlist actions</p>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <button type="button" class="action-chip" @click="setActiveView('products')">Manage products</button>
+          <button type="button" class="action-chip" @click="setActiveView('insights')">View buyer interest</button>
+          <button type="button" class="action-chip" @click="showAddForm = true">Add product</button>
+          <router-link to="/marketplace" class="action-chip">View marketplace</router-link>
+        </div>
+      </section>
+
+      <section v-else-if="activeView === 'insights'" class="insights-section">
         <div class="section-title">
           <div>
             <span class="panel-label">Buyer signals</span>
@@ -77,7 +129,7 @@
         </div>
       </section>
 
-      <section id="products" class="products-section">
+      <section v-else class="products-section">
         <div class="section-title">
           <div>
             <span class="panel-label">Store inventory</span>
@@ -107,6 +159,7 @@
         </div>
         <div v-else class="empty-state">
           <p>No products yet. Add your first product.</p>
+          <button type="button" @click="showAddForm = true" class="btn btn-primary empty-action">Add Product</button>
         </div>
       </section>
     </main>
@@ -161,11 +214,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { clearSession, sellersApi } from '../api.js'
 
 const router = useRouter()
+const activeView = ref('overview')
 const seller = ref(null)
 const sellerName = ref('')
 const showAddForm = ref(false)
@@ -173,12 +227,46 @@ const editingProduct = ref(null)
 const favoriteBuyers = ref([])
 const wishlistedProducts = ref([])
 
+const viewMeta = {
+  overview: {
+    kicker: 'Seller dashboard',
+    title: 'Store overview',
+    description: 'Track your store profile, inventory, and buyer activity from one place.'
+  },
+  products: {
+    kicker: 'Store inventory',
+    title: 'My Products',
+    description: 'Add, edit, or remove products buyers can discover in the marketplace.'
+  },
+  insights: {
+    kicker: 'Buyer signals',
+    title: 'Buyer Interest',
+    description: 'See buyers who favorited your store and products saved to wishlists.'
+  }
+}
+
 const newProduct = ref({
   name: '',
   price: 0,
   image: '',
   description: ''
 })
+
+const productCount = computed(() => seller.value?.products?.length || 0)
+
+const activeViewMeta = computed(() => {
+  const meta = viewMeta[activeView.value] || viewMeta.overview
+  return {
+    ...meta,
+    title: activeView.value === 'overview'
+      ? `Manage ${sellerName.value || 'your store'}`
+      : meta.title
+  }
+})
+
+const setActiveView = (view) => {
+  activeView.value = view
+}
 
 onMounted(() => {
   const currentUser = JSON.parse(localStorage.getItem('currentUser'))
@@ -269,10 +357,6 @@ const closeForm = () => {
   }
 }
 
-const scrollToSection = (sectionId) => {
-  document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
-
 const logout = () => {
   clearSession()
   router.push('/')
@@ -288,7 +372,9 @@ const logout = () => {
 }
 
 .dashboard-sidebar {
-  background: #111827;
+  background: linear-gradient(180deg, #111827 0%, #0f172a 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 18px 0 40px rgba(15, 23, 42, 0.08);
   color: #ffffff;
   display: flex;
   flex-direction: column;
@@ -304,6 +390,7 @@ const logout = () => {
   color: #ffffff;
   display: flex;
   gap: 0.75rem;
+  padding: 0.25rem;
   text-decoration: none;
 }
 
@@ -317,6 +404,15 @@ const logout = () => {
   height: 2.3rem;
   justify-content: center;
   width: 2.3rem;
+}
+
+.sidebar-role {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.76rem;
+  font-weight: 850;
+  margin-top: -0.65rem;
+  padding-left: 3.3rem;
+  text-transform: uppercase;
 }
 
 .seller-card {
@@ -363,20 +459,45 @@ const logout = () => {
 }
 
 .side-link {
+  align-items: center;
   background: transparent;
+  border: 1px solid transparent;
   border-radius: 6px;
   color: rgba(255, 255, 255, 0.76);
   cursor: pointer;
+  display: flex;
+  gap: 0.7rem;
   font-weight: 750;
   padding: 0.65rem 0.75rem;
   text-align: left;
   text-decoration: none;
   transition: background 0.2s ease, color 0.2s ease;
+  width: 100%;
+}
+
+.side-link::before {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  content: "";
+  flex: 0 0 auto;
+  height: 0.42rem;
+  width: 0.42rem;
 }
 
 .side-link:hover {
   background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.08);
   color: #ffffff;
+}
+
+.side-link.active {
+  background: rgba(194, 65, 12, 0.24);
+  border-color: rgba(251, 146, 60, 0.35);
+  color: #ffffff;
+}
+
+.side-link.active::before {
+  background: #fb923c;
 }
 
 .sidebar-stats {
@@ -409,6 +530,7 @@ const logout = () => {
 }
 
 .logout-button {
+  border: 1px solid rgba(255, 255, 255, 0.14);
   margin-top: auto;
   width: 100%;
 }
@@ -432,12 +554,82 @@ const logout = () => {
   margin-top: 0.25rem;
 }
 
+.dashboard-topbar p {
+  margin-top: 0.4rem;
+}
+
+.dashboard-panel {
+  min-height: 420px;
+}
+
+.panel-stack {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.overview-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(260px, 1.2fr) repeat(2, minmax(180px, 0.7fr));
+}
+
+.overview-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+  padding: 1.2rem;
+}
+
+.overview-card h3 {
+  font-size: 1.25rem;
+  margin-top: 0.35rem;
+}
+
+.overview-card strong {
+  color: var(--ink);
+  display: block;
+  font-size: 2rem;
+  line-height: 1;
+  margin-top: 0.45rem;
+}
+
+.overview-card p {
+  margin-top: 0.45rem;
+}
+
+.quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.action-chip {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 750;
+  padding: 0.5rem 0.8rem;
+  text-decoration: none;
+  transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.action-chip:hover {
+  border-color: rgba(194, 65, 12, 0.5);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
 .insights-section,
 .products-section {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 8px;
   box-shadow: var(--shadow-sm);
+  min-height: 420px;
   padding: 1.2rem;
 }
 
@@ -512,6 +704,10 @@ const logout = () => {
   border-radius: 8px;
   color: var(--muted);
   padding: 1rem;
+}
+
+.empty-action {
+  margin-top: 0.9rem;
 }
 
 .products-grid {
@@ -731,6 +927,7 @@ const logout = () => {
 
   .side-nav,
   .sidebar-stats,
+  .overview-grid,
   .insights-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -746,6 +943,7 @@ const logout = () => {
 
   .side-nav,
   .sidebar-stats,
+  .overview-grid,
   .insights-grid {
     grid-template-columns: 1fr;
   }

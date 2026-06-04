@@ -4,6 +4,7 @@
       <div class="nav-content">
         <router-link to="/" class="logo">🏪 Kigali Great Market</router-link>
         <div class="nav-links">
+          <router-link to="/" class="nav-link">Home</router-link>
           <router-link to="/login" class="nav-link">Login</router-link>
         </div>
       </div>

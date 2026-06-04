@@ -7,6 +7,7 @@
       </router-link>
 
       <div class="nav-links">
+        <router-link to="/" class="nav-link">Home</router-link>
         <router-link to="/marketplace" class="nav-link active">All Sellers</router-link>
         <router-link v-if="currentUser" :to="dashboardPath" class="nav-link">Dashboard</router-link>
         <button v-if="currentUser" @click="logout" class="btn btn-secondary nav-button">Logout</button>

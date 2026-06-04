@@ -5,6 +5,7 @@
         <span>KGM</span>
         <strong>Kigali Great Market</strong>
       </router-link>
+      <div class="sidebar-role">Buyer workspace</div>
 
       <div class="buyer-card">
         <div class="avatar-wrap">
@@ -20,10 +21,40 @@
       </div>
 
       <nav class="side-nav">
+        <router-link to="/" class="side-link">Home</router-link>
+        <button
+          type="button"
+          class="side-link"
+          :class="{ active: activeView === 'overview' }"
+          @click="setActiveView('overview')"
+        >
+          Overview
+        </button>
         <router-link to="/marketplace" class="side-link">Marketplace</router-link>
-        <button class="side-link" @click="scrollToSection('favorite-sellers')">Favorite Sellers</button>
-        <button class="side-link" @click="scrollToSection('wishlist')">Wishlist</button>
-        <button class="side-link" @click="scrollToSection('edit-profile')">Profile Settings</button>
+        <button
+          type="button"
+          class="side-link"
+          :class="{ active: activeView === 'favorites' }"
+          @click="setActiveView('favorites')"
+        >
+          Favorite Sellers
+        </button>
+        <button
+          type="button"
+          class="side-link"
+          :class="{ active: activeView === 'wishlist' }"
+          @click="setActiveView('wishlist')"
+        >
+          Wishlist
+        </button>
+        <button
+          type="button"
+          class="side-link"
+          :class="{ active: activeView === 'settings' }"
+          @click="setActiveView('settings')"
+        >
+          Profile Settings
+        </button>
       </nav>
 
       <button @click="logout" class="btn btn-secondary logout-button">Logout</button>
@@ -32,66 +63,69 @@
     <main class="dashboard-main">
       <header class="dashboard-topbar">
         <div>
-          <span class="section-kicker">Buyer dashboard</span>
-          <h2>Welcome back, {{ buyer.name || 'buyer' }}</h2>
+          <span class="section-kicker">{{ activeViewMeta.kicker }}</span>
+          <h2>{{ activeViewMeta.title }}</h2>
+          <p>{{ activeViewMeta.description }}</p>
         </div>
         <router-link to="/marketplace" class="btn btn-primary">Browse Sellers</router-link>
       </header>
 
-      <section class="profile-panel">
-        <div class="profile-copy">
-          <span class="panel-label">Profile overview</span>
-          <h3>Your marketplace account</h3>
-          <p>Keep your location and contact details current so seller suggestions can become more precise.</p>
+      <section v-if="activeView === 'overview'" class="dashboard-panel panel-stack">
+        <div class="profile-panel">
+          <div class="profile-copy">
+            <span class="panel-label">Profile overview</span>
+            <h3>Your marketplace account</h3>
+            <p>Keep your location and contact details current so seller suggestions can become more precise.</p>
+          </div>
+
+          <div class="buyer-details">
+            <div class="detail-item">
+              <span>Email</span>
+              <strong>{{ buyer.email || 'Not available' }}</strong>
+            </div>
+            <div class="detail-item">
+              <span>Phone</span>
+              <strong>{{ buyer.phone || 'Not available' }}</strong>
+            </div>
+            <div class="detail-item">
+              <span>Location</span>
+              <strong>{{ buyer.location || 'Not available' }}</strong>
+            </div>
+            <div class="detail-item">
+              <span>ID Number</span>
+              <strong>{{ buyer.idnumber || 'Not available' }}</strong>
+            </div>
+          </div>
         </div>
 
-        <div class="buyer-details">
-          <div class="detail-item">
-            <span>Email</span>
-            <strong>{{ buyer.email || 'Not available' }}</strong>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <span>Favorite sellers</span>
+            <strong>{{ favoriteSellerDetails.length }}</strong>
           </div>
-          <div class="detail-item">
-            <span>Phone</span>
-            <strong>{{ buyer.phone || 'Not available' }}</strong>
+          <div class="stat-box">
+            <span>Wishlist products</span>
+            <strong>{{ wishlistDetails.length }}</strong>
           </div>
-          <div class="detail-item">
-            <span>Location</span>
-            <strong>{{ buyer.location || 'Not available' }}</strong>
+          <div class="stat-box">
+            <span>Registered sellers</span>
+            <strong>{{ sellers.length }}</strong>
           </div>
-          <div class="detail-item">
-            <span>ID Number</span>
-            <strong>{{ buyer.idnumber || 'Not available' }}</strong>
+          <div class="stat-box">
+            <span>Unread messages</span>
+            <strong>0</strong>
           </div>
+        </div>
+
+        <div class="quick-actions">
+          <button type="button" class="action-chip" @click="setActiveView('favorites')">Favorite sellers</button>
+          <button type="button" class="action-chip" @click="setActiveView('wishlist')">Wishlist</button>
+          <button type="button" class="action-chip" @click="setActiveView('settings')">Edit profile</button>
+          <router-link to="/marketplace" class="action-chip">Browse marketplace</router-link>
         </div>
       </section>
 
-      <section class="stats-grid">
-        <div class="stat-box">
-          <span>Favorite sellers</span>
-          <strong>{{ favoriteSellerDetails.length }}</strong>
-        </div>
-        <div class="stat-box">
-          <span>Wishlist products</span>
-          <strong>{{ wishlistDetails.length }}</strong>
-        </div>
-        <div class="stat-box">
-          <span>Total purchases</span>
-          <strong>0</strong>
-        </div>
-        <div class="stat-box">
-          <span>Unread messages</span>
-          <strong>0</strong>
-        </div>
-      </section>
-
-      <section class="quick-actions">
-        <button class="action-chip" @click="scrollToSection('favorite-sellers')">Favorite sellers</button>
-        <button class="action-chip" @click="viewPurchaseHistory">Purchase history</button>
-        <button class="action-chip" @click="scrollToSection('wishlist')">Wishlist</button>
-        <button class="action-chip" @click="toggleEditMode">{{ editMode ? 'Close settings' : 'Edit profile' }}</button>
-      </section>
-
-      <section id="favorite-sellers" class="saved-section">
+      <section v-else-if="activeView === 'favorites'" class="saved-section">
         <div class="section-title">
           <div>
             <span class="panel-label">Saved businesses</span>
@@ -118,10 +152,11 @@
         </div>
         <div v-else class="mini-empty">
           <p>No favorite sellers yet.</p>
+          <router-link to="/marketplace" class="btn btn-primary empty-action">Find sellers</router-link>
         </div>
       </section>
 
-      <section id="wishlist" class="saved-section">
+      <section v-else-if="activeView === 'wishlist'" class="saved-section">
         <div class="section-title">
           <div>
             <span class="panel-label">Saved products</span>
@@ -148,21 +183,19 @@
         </div>
         <div v-else class="mini-empty">
           <p>No wishlist products yet.</p>
+          <router-link to="/marketplace" class="btn btn-primary empty-action">Browse products</router-link>
         </div>
       </section>
 
-      <section id="edit-profile" class="edit-section">
+      <section v-else class="edit-section">
         <div class="section-title">
           <div>
             <span class="panel-label">Account settings</span>
             <h3>Edit Profile</h3>
           </div>
-          <button @click="toggleEditMode" class="btn btn-secondary">
-            {{ editMode ? 'Cancel' : 'Edit' }}
-          </button>
         </div>
 
-        <form v-if="editMode" class="edit-form" @submit.prevent="saveProfile">
+        <form class="edit-form" @submit.prevent="saveProfile">
           <div class="form-group">
             <label>Phone Number</label>
             <input v-model="buyer.phone" type="tel" placeholder="Enter phone number">
@@ -186,6 +219,7 @@ import { useRouter } from 'vue-router'
 import { buyerApi, clearSession, sellersApi } from '../api.js'
 
 const router = useRouter()
+const activeView = ref('overview')
 const buyer = ref({
   id: '',
   name: '',
@@ -195,8 +229,30 @@ const buyer = ref({
   idnumber: '',
   profilePicture: ''
 })
-const editMode = ref(false)
 const sellers = ref([])
+
+const viewMeta = {
+  overview: {
+    kicker: 'Buyer dashboard',
+    title: 'Welcome back',
+    description: 'Review your account, saved sellers, wishlist, and marketplace activity.'
+  },
+  favorites: {
+    kicker: 'Saved businesses',
+    title: 'Favorite Sellers',
+    description: 'Open sellers you saved and continue browsing their products.'
+  },
+  wishlist: {
+    kicker: 'Saved products',
+    title: 'Wishlist',
+    description: 'Review products you saved from sellers across the marketplace.'
+  },
+  settings: {
+    kicker: 'Account settings',
+    title: 'Profile Settings',
+    description: 'Update the contact and location details connected to your buyer account.'
+  }
+}
 
 onMounted(() => {
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null')
@@ -259,6 +315,20 @@ const wishlistDetails = computed(() => {
   })
 })
 
+const activeViewMeta = computed(() => {
+  const meta = viewMeta[activeView.value] || viewMeta.overview
+  return {
+    ...meta,
+    title: activeView.value === 'overview'
+      ? `${meta.title}, ${buyer.value.name || 'buyer'}`
+      : meta.title
+  }
+})
+
+const setActiveView = (view) => {
+  activeView.value = view
+}
+
 const handleProfilePictureUpload = (e) => {
   const file = e.target.files[0]
   if (file) {
@@ -287,23 +357,10 @@ const saveBuyerProfile = async () => {
 const saveProfile = async () => {
   try {
     await saveBuyerProfile()
-    editMode.value = false
     alert('Profile updated successfully!')
   } catch (error) {
     alert(error.message)
   }
-}
-
-const toggleEditMode = () => {
-  editMode.value = !editMode.value
-}
-
-const viewPurchaseHistory = () => {
-  alert('Purchase History feature coming soon!')
-}
-
-const scrollToSection = (sectionId) => {
-  document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 const logout = () => {
@@ -321,7 +378,9 @@ const logout = () => {
 }
 
 .dashboard-sidebar {
-  background: #111827;
+  background: linear-gradient(180deg, #111827 0%, #0f172a 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 18px 0 40px rgba(15, 23, 42, 0.08);
   color: #ffffff;
   display: flex;
   flex-direction: column;
@@ -337,6 +396,7 @@ const logout = () => {
   color: #ffffff;
   display: flex;
   gap: 0.75rem;
+  padding: 0.25rem;
   text-decoration: none;
 }
 
@@ -350,6 +410,15 @@ const logout = () => {
   height: 2.3rem;
   justify-content: center;
   width: 2.3rem;
+}
+
+.sidebar-role {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.76rem;
+  font-weight: 850;
+  margin-top: -0.7rem;
+  padding-left: 3.3rem;
+  text-transform: uppercase;
 }
 
 .buyer-card {
@@ -416,23 +485,49 @@ const logout = () => {
 }
 
 .side-link {
+  align-items: center;
   background: transparent;
+  border: 1px solid transparent;
   border-radius: 6px;
   color: rgba(255, 255, 255, 0.76);
   cursor: pointer;
+  display: flex;
+  gap: 0.7rem;
   font-weight: 750;
   padding: 0.65rem 0.75rem;
   text-align: left;
   text-decoration: none;
   transition: background 0.2s ease, color 0.2s ease;
+  width: 100%;
+}
+
+.side-link::before {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  content: "";
+  flex: 0 0 auto;
+  height: 0.42rem;
+  width: 0.42rem;
 }
 
 .side-link:hover {
   background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.08);
   color: #ffffff;
 }
 
+.side-link.active {
+  background: rgba(194, 65, 12, 0.24);
+  border-color: rgba(251, 146, 60, 0.35);
+  color: #ffffff;
+}
+
+.side-link.active::before {
+  background: #fb923c;
+}
+
 .logout-button {
+  border: 1px solid rgba(255, 255, 255, 0.14);
   margin-top: auto;
   width: 100%;
 }
@@ -454,6 +549,19 @@ const logout = () => {
   font-size: 2.25rem;
   line-height: 1.1;
   margin-top: 0.25rem;
+}
+
+.dashboard-topbar p {
+  margin-top: 0.4rem;
+}
+
+.dashboard-panel {
+  min-height: 420px;
+}
+
+.panel-stack {
+  display: grid;
+  gap: 1.25rem;
 }
 
 .profile-panel,
@@ -567,6 +675,7 @@ const logout = () => {
   font-size: 0.88rem;
   font-weight: 750;
   padding: 0.5rem 0.8rem;
+  text-decoration: none;
   transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
@@ -578,6 +687,7 @@ const logout = () => {
 
 .saved-section,
 .edit-section {
+  min-height: 420px;
   padding: 1.2rem;
 }
 
@@ -599,6 +709,10 @@ const logout = () => {
   font-size: 0.88rem;
   font-weight: 800;
   text-decoration: none;
+}
+
+.empty-action {
+  margin-top: 0.9rem;
 }
 
 .saved-grid {
